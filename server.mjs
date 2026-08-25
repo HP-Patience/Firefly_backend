@@ -233,7 +233,7 @@ const api = async (req, res, pathname, url) => {
   }
   if (pathname === "/api/git/status" && req.method === "GET") {
     const base = projectPath(); if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
-    try { return json(res, 200, await run("git", ["status", "--short"], base)); } catch (error) { return json(res, 400, { error: error.message }); }
+    try { const result = await run("git", ["-c", "core.quotePath=false", "status", "--short"], base); result.output = result.output.split(/\r?\n/).filter((line) => !line.trim().endsWith(".bak") && !line.includes(".playwright-mcp/")).join("\n").trim(); return json(res, 200, result); } catch (error) { return json(res, 400, { error: error.message }); }
   }
   if (pathname === "/api/git/commit" && req.method === "POST") {
     const base = projectPath(); if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
