@@ -86,4 +86,4 @@ $("#content-list").onclick = async (event) => {
   }
 };
 refresh();
-$("#side-new").onclick = () => openEditor(); $("#top-select").onclick = () => $("#select-project").click(); $("#top-build").onclick = () => $("#run-build").click(); $("#side-build").onclick = () => $("#run-build").click(); $("#top-git").onclick = () => $("#git-status").click(); $("#top-config").onclick = () => $("#select-project").click();
+$("#side-new").onclick = () => openEditor(); $("#side-build").onclick = () => $("#run-build").click(); $("#project-help").onclick = () => $("#project-help-modal").classList.remove("hidden"); $("#close-project-help").onclick = () => $("#project-help-modal").classList.add("hidden"); $("#project-help-modal").onclick = (event) => { if (event.target === event.currentTarget) $("#project-help-modal").classList.add("hidden"); };
