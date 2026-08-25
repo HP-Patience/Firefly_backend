@@ -1,6 +1,7 @@
 nav.top-nav{margin-top:0}
 nav.side-nav{margin-top:0}
 .side-card-title{justify-content:space-between}
+.side-card:not(.project-card) .side-card-title{justify-content:flex-start;gap:9px}
 .help-button{width:22px;height:22px;border:1px solid #d9dcde;border-radius:50%;background:#fff;color:#596268;font:700 12px inherit;cursor:pointer}.help-button:hover{border-color:#111;color:#111}
 .project-state .project-change{margin-left:auto;flex:none}
 .project-state>div{min-width:0;flex:1}.project-state p{max-width:none}.project-state .project-change{font-size:10px;padding:7px 8px}
