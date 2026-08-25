@@ -244,6 +244,15 @@ const api = async (req, res, pathname, url) => {
     const base = projectPath(); if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
     try { const result = await run("git", ["-c", "core.quotePath=false", "status", "--short"], base); result.output = result.output.split(/\r?\n/).filter((line) => !line.trim().endsWith(".bak") && !line.includes(".playwright-mcp/")).join("\n").trim(); return json(res, 200, result); } catch (error) { return json(res, 400, { error: error.message }); }
   }
+  if (pathname === "/api/git/remote/add" && req.method === "POST") {
+    const input = await body(req); const alias = String(input.alias || "origin").trim(); const remote = String(input.url || "").trim();
+    if (!/^[\w.-]+$/.test(alias) || !/^https:\/\//i.test(remote)) return json(res, 400, { error: "请输入有效的远程别名和 HTTPS 仓库地址" });
+    try { const directory = input.target === "artifact" ? await ensureArtifactRepo() : projectPath(); if (!directory) return json(res, 400, { error: "请先连接 Firefly 项目" }); const result = await run("git", ["remote", "add", alias, remote], directory); return json(res, 200, { ok: true, ...result, directory }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
+  }
+  if (pathname === "/api/git/remote/test" && req.method === "POST") {
+    const input = await body(req);
+    try { const directory = input.target === "artifact" ? await ensureArtifactRepo() : projectPath(); if (!directory) return json(res, 400, { error: "请先连接 Firefly 项目" }); const result = await run("git", ["-c", "core.quotePath=false", "remote", "-v"], directory); return json(res, 200, { ok: true, ...result, directory }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
+  }
   if (pathname === "/api/git/artifact-status" && req.method === "GET") {
     try { const directory = await ensureArtifactRepo(); const result = await run("git", ["-c", "core.quotePath=false", "status", "--short"], directory); return json(res, 200, { ...result, repository: artifactRemote, directory }); } catch (error) { return json(res, 400, { error: error.message }); }
   }
