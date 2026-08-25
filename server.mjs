@@ -237,7 +237,7 @@ const api = async (req, res, pathname, url) => {
   }
   if (pathname === "/api/git/commit" && req.method === "POST") {
     const base = projectPath(); if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
-    const input = await body(req); try { await run("git", ["add", "src/content", "public"], base); const result = await run("git", ["commit", "-m", String(input.message || "content: update from Firefly studio")], base); return json(res, 200, { ok: true, ...result }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
+    const input = await body(req); try { await run("git", ["add", "src/content", "public", "--", ":!*.bak"], base); const result = await run("git", ["commit", "-m", String(input.message || "content: update from Firefly studio")], base); return json(res, 200, { ok: true, ...result }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
   }
   if (pathname === "/api/git/push" && req.method === "POST") {
     const base = projectPath(); if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
