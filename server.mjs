@@ -181,26 +181,6 @@ const renderContent = (content, sourcePath = null) => {
   if (sourcePath) html = html.replace(/(src|href)="(?!https?:\/\/|data:|#|\/)([^"]+)"/g, (_, attribute, asset) => { let decodedAsset = asset; try { decodedAsset = decodeURIComponent(asset); } catch {} return `${attribute}="/api/project/resource?file=${encodeURIComponent(sourcePath)}&asset=${encodeURIComponent(decodedAsset)}"`; });
   return html;
 };
-const fireflyMime = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif", ".webp": "image/webp", ".avif": "image/avif", ".woff": "font/woff", ".woff2": "font/woff2", ".ttf": "font/ttf" };
-const serveFireflyDist = (res, pathname) => {
-  const base = projectPath();
-  if (!base) return false;
-  const relativePath = pathname.replace(/^\/preview-firefly\/?/, "");
-  const candidate = resolve(join(base, "dist", relativePath || "index.html"));
-  const file = existsSync(candidate) && statSync(candidate).isFile() ? candidate : join(candidate, "index.html");
-  if (!file.startsWith(resolve(join(base, "dist"))) || !existsSync(file)) return false;
-  const extension = extname(file).toLowerCase();
-  let content = readFileSync(file);
-  if (extension === ".html") {
-    content = content.toString("utf8").replace(/(["'(])\/(?!\/)/g, "$1/preview-firefly/");
-    res.writeHead(200, { "Content-Type": fireflyMime[extension], "Cache-Control": "no-store" });
-    res.end(content);
-  } else {
-    res.writeHead(200, { "Content-Type": fireflyMime[extension] || "application/octet-stream", "Cache-Control": "no-store" });
-    res.end(content);
-  }
-  return true;
-};
 const run = async (command, args, cwd) => {
   const result = await execFileAsync(command, args, { cwd, windowsHide: true, maxBuffer: 4 * 1024 * 1024 });
   return { output: `${result.stdout || ""}${result.stderr || ""}` };
@@ -335,10 +315,6 @@ const api = async (req, res, pathname, url) => {
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
-  if (url.pathname === "/preview-firefly" || url.pathname.startsWith("/preview-firefly/")) {
-    if (!serveFireflyDist(res, url.pathname)) return json(res, 404, { error: "Firefly 构建产物不存在，请先运行构建检查" });
-    return;
-  }
   if (url.pathname.startsWith("/api/")) {
     try { await api(req, res, url.pathname, url); } catch (error) { json(res, 400, { error: error.message || "请求处理失败" }); }
     return;
