@@ -31,9 +31,17 @@ npm run dev
 - 监听 Firefly 内容目录并实时刷新后台
 - 独立文章预览页
 - Git 状态、提交和推送
+- 源码仓库与构建产物仓库分开管理
 - 发布前执行 Firefly `pnpm check` 和 `pnpm build`
 - 原子写入、旧文件 `.bak` 备份和文件来源显示
 
 连接项目后，新建或编辑的文章会直接写入 `src/content/posts`，已发布动态会写入 `src/content/dynamic`。动态草稿暂存在 `data/content.json`，发布时再写入 Firefly 项目。
+
+## 两个 Git 仓库
+
+- 源码仓库：`Firefly` → `https://github.com/HP-Patience/blog-firefly.git`
+- 构建仓库：`Firefly/dist` → `https://github.com/HP-Patience/blog-firefly-dist.git`
+
+侧栏中的“提交源码”和“上传源码”只操作源码仓库；“构建并上传”会运行构建，然后只提交和推送 `dist` 构建仓库。首次查看或上传构建产物时，后台会自动给 `dist` 初始化独立 Git 仓库并绑定构建远程。
 
 编辑已有文件时会保留原 frontmatter 的字段顺序、注释和未编辑字段，只更新后台修改的字段。原文件写入前会保留为同名 `.bak` 文件。

@@ -61,7 +61,9 @@ const projectAction = async (url, options = {}) => { const response = await fetc
 $("#git-status").onclick = async () => { const result = await projectAction("/api/git/status"); if (result) alert(result.output?.trim() || "工作区没有未提交变更"); };
 $("#git-commit").onclick = async () => { const message = prompt("提交说明", "content: update from Firefly studio"); if (!message) return; const result = await projectAction("/api/git/commit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message }) }); if (result) toast("Git 提交完成"); };
 $("#git-push").onclick = async () => { const result = await projectAction("/api/git/push", { method: "POST" }); if (result) toast("Git 推送完成"); };
+$("#artifact-status").onclick = async () => { const result = await projectAction("/api/git/artifact-status"); if (result) alert(`构建产物仓库：${result.repository}\n\n${result.output?.trim() || "工作区没有未提交变更"}`); };
 $("#run-build").onclick = async () => { const button = $("#run-build"); button.disabled = true; button.textContent = "检查中..."; const result = await projectAction("/api/project/build", { method: "POST" }); button.disabled = false; button.textContent = "检查构建"; if (result) toast("Firefly 检查和构建通过"); };
+$("#deploy-dist").onclick = async () => { if (!confirm("将先构建 Firefly，再把 dist 推送到 blog-firefly-dist，确认继续吗？")) return; const button = $("#deploy-dist"); button.disabled = true; button.textContent = "上传中..."; const result = await projectAction("/api/project/deploy", { method: "POST" }); button.disabled = false; button.textContent = "构建并上传"; if (result) toast("构建产物已上传到 blog-firefly-dist"); };
 if (window.EventSource) { const events = new EventSource("/api/events"); events.addEventListener("content-changed", () => { refresh(); toast("检测到项目文件变化，内容已刷新"); }); }
 $("#content-list").onclick = async (event) => {
   const button = event.target.closest("button");

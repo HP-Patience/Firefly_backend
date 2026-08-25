@@ -13,6 +13,7 @@ const dataDir = join(root, "data");
 const dataFile = join(dataDir, "content.json");
 const settingsFile = join(dataDir, "settings.json");
 const port = Number(process.env.PORT || 8787);
+const artifactRemote = "https://github.com/HP-Patience/blog-firefly-dist.git";
 const eventClients = new Set();
 let projectWatcher = null;
 let watcherTimer = null;
@@ -69,6 +70,14 @@ const projectPath = () => {
   const configured = readSettings().projectPath;
   if (!configured || !existsSync(configured)) return null;
   return configured;
+};
+const artifactPath = () => { const base = projectPath(); return base ? join(base, "dist") : null; };
+const ensureArtifactRepo = async () => {
+  const directory = artifactPath();
+  if (!directory || !existsSync(directory)) throw new Error("还没有构建产物，请先运行构建");
+  if (!existsSync(join(directory, ".git"))) await run("git", ["init", "-b", "master"], directory);
+  try { await run("git", ["remote", "set-url", "origin", artifactRemote], directory); } catch { await run("git", ["remote", "add", "origin", artifactRemote], directory); }
+  return directory;
 };
 const walk = (directory, extensions, result = []) => {
   if (!existsSync(directory)) return result;
@@ -235,6 +244,9 @@ const api = async (req, res, pathname, url) => {
     const base = projectPath(); if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
     try { const result = await run("git", ["-c", "core.quotePath=false", "status", "--short"], base); result.output = result.output.split(/\r?\n/).filter((line) => !line.trim().endsWith(".bak") && !line.includes(".playwright-mcp/")).join("\n").trim(); return json(res, 200, result); } catch (error) { return json(res, 400, { error: error.message }); }
   }
+  if (pathname === "/api/git/artifact-status" && req.method === "GET") {
+    try { const directory = await ensureArtifactRepo(); const result = await run("git", ["-c", "core.quotePath=false", "status", "--short"], directory); return json(res, 200, { ...result, repository: artifactRemote, directory }); } catch (error) { return json(res, 400, { error: error.message }); }
+  }
   if (pathname === "/api/git/commit" && req.method === "POST") {
     const base = projectPath(); if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
     const input = await body(req); try { await run("git", ["add", "src/content", "public", "--", ":!*.bak"], base); const result = await run("git", ["commit", "-m", String(input.message || "content: update from Firefly studio")], base); return json(res, 200, { ok: true, ...result }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
@@ -242,6 +254,23 @@ const api = async (req, res, pathname, url) => {
   if (pathname === "/api/git/push" && req.method === "POST") {
     const base = projectPath(); if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
     try { return json(res, 200, { ok: true, ...(await run("git", ["push"], base)) }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
+  }
+  if (pathname === "/api/git/artifact-commit" && req.method === "POST") {
+    try { const directory = await ensureArtifactRepo(); const input = await body(req); await run("git", ["add", "-A"], directory); const result = await run("git", ["commit", "-m", String(input.message || `deploy: ${dateText().replace(/[: ]/g, "-")}`)], directory); return json(res, 200, { ok: true, ...result, repository: artifactRemote }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
+  }
+  if (pathname === "/api/git/artifact-push" && req.method === "POST") {
+    try { const directory = await ensureArtifactRepo(); const result = await run("git", ["push", "--force-with-lease", "origin", "master"], directory); return json(res, 200, { ok: true, ...result, repository: artifactRemote }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
+  }
+  if (pathname === "/api/project/deploy" && req.method === "POST") {
+    const base = projectPath(); if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
+    try {
+      const build = await runPnpm(["build"], base);
+      const directory = await ensureArtifactRepo();
+      const status = await run("git", ["status", "--short"], directory);
+      if (status.output.trim()) { await run("git", ["add", "-A"], directory); await run("git", ["commit", "-m", `deploy: ${dateText().replace(/[: ]/g, "-")}`], directory); }
+      const push = await run("git", ["push", "--force-with-lease", "origin", "master"], directory);
+      return json(res, 200, { ok: true, repository: artifactRemote, build: build.output, push: push.output });
+    } catch (error) { return json(res, 400, { ok: false, error: error.message, output: error.stdout || error.stderr || "" }); }
   }
   if (pathname === "/api/project/upload" && req.method === "POST") {
     const base = projectPath(); const type = String(req.headers["content-type"] || ""); const boundary = type.match(/boundary=(?:"([^"]+)"|([^;]+))/i)?.[1] || type.match(/boundary=(?:"([^"]+)"|([^;]+))/i)?.[2];
