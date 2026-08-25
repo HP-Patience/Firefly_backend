@@ -2,7 +2,7 @@ const state = { items: [], filter: "all", status: "all", editingId: null, editin
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
 const formatDate = (value) => value ? new Intl.DateTimeFormat("zh-CN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value)) : "未发布";
-const toast = (message) => { $("#toast").textContent = message; $("#toast").classList.add("show"); setTimeout(() => $("#toast").classList.remove("show"), 2200); };
+const toast = (message) => { const item = document.createElement("div"); item.className = "toast-message"; item.textContent = message; $("#toast").append(item); requestAnimationFrame(() => item.classList.add("show")); setTimeout(() => { item.classList.remove("show"); setTimeout(() => item.remove(), 220); }, 2600); };
 const renderMarkdown = (source, sourcePath = null) => {
   const lines = String(source).replace(/\r/g, "").split("\n");
   const html = [];
