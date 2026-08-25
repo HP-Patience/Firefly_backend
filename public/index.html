@@ -5,19 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Firefly 内容后台</title>
     <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/workspace.css" />
   </head>
   <body>
-    <div class="shell">
+    <header class="app-header"><div class="app-brand"><strong>Firefly Hub</strong><span class="connection-pill" id="header-connection">未连接</span></div><nav class="top-nav"><button class="top-nav-item active">▤ <span>文章</span></button><button class="top-nav-item" id="top-config">⚙ <span>项目配置</span></button><button class="top-nav-item" id="top-git">›_ <span>Git</span></button><button class="top-nav-item" id="top-build">▷ <span>生成</span></button><button class="top-nav-item" id="top-select">◉ <span>连接项目</span></button><button class="top-nav-item" id="top-theme">☾</button></nav></header>
+    <div class="app-body">
       <aside class="sidebar">
-        <div class="brand"><span class="brand-mark">✦</span><span>FIREFLY <small>CONTENT STUDIO</small></span></div>
-        <nav><button class="nav-item active" data-filter="all">总览 <span id="all-count">0</span></button><button class="nav-item" data-filter="article">文章 <span id="article-count">0</span></button><button class="nav-item" data-filter="dynamic">动态 <span id="dynamic-count">0</span></button><button class="nav-item" data-filter="draft">草稿 <span id="draft-count">0</span></button></nav>
-        <div class="sidebar-foot">本地内容工作区<br /><span>所有数据保存在当前目录</span></div>
+        <section class="side-card project-card" id="project-bar"><div class="side-card-title">⌁ <strong>Firefly 项目</strong></div><div class="project-state"><span class="connection-dot"></span><div><strong id="project-name">尚未连接</strong><p id="project-path">选择博客项目文件夹</p></div></div><div class="project-metrics hidden" id="project-metrics"><span><b id="project-articles">0</b> 篇文章</span><span><b id="project-dynamics">0</b> 条动态</span><span><b id="project-resources">0</b> 个资源</span></div><div class="side-actions"><button class="connect-button" id="select-project">选择</button><button class="connect-button" id="git-status">Git 状态</button></div><div class="project-actions hidden"><button class="connect-button" id="git-commit">提交</button><button class="connect-button" id="git-push">推送</button><button class="connect-button" id="run-build">检查构建</button></div></section>
+        <section class="side-card"><div class="side-card-title">▤ <strong>内容管理</strong></div><nav class="side-nav"><button class="nav-item active" data-filter="all">▤ <span>内容总览</span><b id="all-count">0</b></button><button class="nav-item" data-filter="article">▤ <span>文章列表</span><b id="article-count">0</b></button><button class="nav-item" data-filter="dynamic">◌ <span>动态列表</span><b id="dynamic-count">0</b></button><button class="nav-item" data-filter="draft">◫ <span>草稿箱</span><b id="draft-count">0</b></button></nav></section>
+        <section class="side-card"><div class="side-card-title">⚙ <strong>工作区</strong></div><nav class="side-nav"><button class="nav-item" id="side-new">＋ <span>创建新内容</span></button><button class="nav-item" id="side-build">▷ <span>检查构建</span></button></nav></section>
+        <div class="sidebar-foot">本地内容工作区<br /><span>源文件保存在 Firefly 项目中</span></div>
       </aside>
       <main class="main">
-        <header class="topbar"><div><p class="eyebrow">CONTENT WORKSPACE / 01</p><h1 id="page-title">内容总览</h1></div><button class="primary" id="new-button">＋ 新建内容</button></header>
-        <section class="project-bar" id="project-bar"><div class="project-state"><span class="connection-dot"></span><div><strong id="project-name">尚未连接 Firefly</strong><p id="project-path">选择博客项目文件夹后，即可读取真实文章、动态和图片资源</p></div></div><div class="project-metrics hidden" id="project-metrics"><span><b id="project-articles">0</b> 篇文章</span><span><b id="project-dynamics">0</b> 条动态</span><span><b id="project-resources">0</b> 个资源</span></div><div class="project-actions"><button class="connect-button" id="git-status">Git 状态</button><button class="connect-button" id="git-commit">提交</button><button class="connect-button" id="git-push">推送</button><button class="connect-button" id="run-build">检查构建</button><button class="connect-button" id="select-project">选择文件夹</button></div></section>
-        <section class="stats"><div><span>全部内容</span><strong id="stat-total">0</strong></div><div><span>已发布</span><strong id="stat-published">0</strong></div><div><span>待创作草稿</span><strong id="stat-drafts">0</strong></div><div><span>最近更新</span><strong id="stat-latest">暂无</strong></div></section>
-        <section class="toolbar"><div class="tabs"><button class="tab active" data-status="all">全部</button><button class="tab" data-status="published">已发布</button><button class="tab" data-status="draft">草稿</button></div><input id="search" type="search" placeholder="搜索标题或正文..." /></section>
+        <header class="content-header"><div><p class="eyebrow">FIREFLY / CONTENT</p><h1 id="page-title">文章列表</h1></div><button class="primary" id="new-button">＋ 创建新内容</button></header>
+        <section class="content-toolbar"><div class="toolbar-left"><button class="select-button">□ 选择</button><div class="tabs"><button class="tab active" data-status="all">全部</button><button class="tab" data-status="published">已发布</button><button class="tab" data-status="draft">草稿</button></div></div><div class="toolbar-right"><input id="search" type="search" placeholder="输入文章标题搜索..." /><span class="content-count" id="content-count">共 0 篇文章</span><span class="sort-label">↓ 按发布日期（降序）</span></div></section>
         <section id="content-list" class="content-list"></section>
       </main>
     </div>
