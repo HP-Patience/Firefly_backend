@@ -26,5 +26,14 @@ npm run dev
 - 扫描 `src/content/posts` 中的文章和关联图片
 - 扫描 `src/content/dynamic` 中的动态
 - 直接编辑 Firefly 项目中的 Markdown 源文件
+- 使用 `marked` 进行编辑器和独立预览页的 Markdown 渲染
+- 上传图片到当前文章目录的 `assets` 文件夹
+- 监听 Firefly 内容目录并实时刷新后台
+- 独立文章预览页
+- Git 状态、提交和推送
+- 发布前执行 Firefly `pnpm check` 和 `pnpm build`
+- 原子写入、旧文件 `.bak` 备份和文件来源显示
 
 连接项目后，新建或编辑的文章会直接写入 `src/content/posts`，已发布动态会写入 `src/content/dynamic`。动态草稿暂存在 `data/content.json`，发布时再写入 Firefly 项目。
+
+编辑已有文件时会保留原 frontmatter 的字段顺序、注释和未编辑字段，只更新后台修改的字段。原文件写入前会保留为同名 `.bak` 文件。
