@@ -68,7 +68,7 @@ $("#content-list").onclick = async (event) => {
   if (!button) return;
   const item = state.items.find((entry) => entry.id === button.dataset.id);
   if (!item) return;
-  if (button.dataset.action === "preview") { if (item.sourcePath) { const result = await projectAction("/api/project/build", { method: "POST" }); if (!result) return; const fireflyUrl = item.type === "article" && item.slug ? `/preview-firefly/posts/${item.slug.replace(/^\/+|\/+$/g, "")}/` : "/preview-firefly/dynamic/"; window.open(fireflyUrl, "_blank", "noopener"); } else window.open(`/preview.html?id=${encodeURIComponent(item.id)}`, "_blank", "noopener"); return; }
+  if (button.dataset.action === "preview") { if (item.sourcePath) { const previewWindow = window.open("about:blank", "_blank"); if (!previewWindow) return toast("浏览器阻止了预览窗口，请允许本站弹出窗口"); previewWindow.document.title = "正在生成 Firefly 预览..."; const result = await projectAction("/api/project/build", { method: "POST" }); if (!result) { previewWindow.close(); return; } const fireflyUrl = item.type === "article" && item.slug ? `/preview-firefly/posts/${item.slug.replace(/^\/+|\/+$/g, "")}/` : "/preview-firefly/dynamic/"; previewWindow.location.href = fireflyUrl; } else window.open(`/preview.html?id=${encodeURIComponent(item.id)}`, "_blank", "noopener"); return; }
   if (button.dataset.action === "edit") openEditor(item);
   if (button.dataset.action === "toggle") {
     const response = await fetch(`/api/content/${item.id}/${item.status === "published" ? "unpublish" : "publish"}`, { method: "POST" });
