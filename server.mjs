@@ -178,7 +178,7 @@ const createProjectItem = (input, status) => {
 };
 const renderContent = (content, sourcePath = null) => {
   let html = marked.parse(content, { gfm: true, breaks: true });
-  if (sourcePath) html = html.replace(/(src|href)="(?!https?:\/\/|data:|#|\/)([^"]+)"/g, (_, attribute, asset) => `${attribute}="/api/project/resource?file=${encodeURIComponent(sourcePath)}&asset=${encodeURIComponent(asset)}"`);
+  if (sourcePath) html = html.replace(/(src|href)="(?!https?:\/\/|data:|#|\/)([^"]+)"/g, (_, attribute, asset) => { let decodedAsset = asset; try { decodedAsset = decodeURIComponent(asset); } catch {} return `${attribute}="/api/project/resource?file=${encodeURIComponent(sourcePath)}&asset=${encodeURIComponent(decodedAsset)}"`; });
   return html;
 };
 const run = async (command, args, cwd) => {
