@@ -29,7 +29,7 @@ npm run dev
 - 使用 `marked` 进行编辑器和独立预览页的 Markdown 渲染
 - 上传图片到当前文章目录的 `assets` 文件夹
 - 监听 Firefly 内容目录并实时刷新后台
-- 独立文章预览页
+- 由后台直接托管 Firefly `dist` 构建产物的文章预览页，不依赖 Firefly 开发服务器
 - Git 状态、提交和推送
 - 发布前执行 Firefly `pnpm check` 和 `pnpm build`
 - 原子写入、旧文件 `.bak` 备份和文件来源显示
