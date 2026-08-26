@@ -325,7 +325,18 @@ const api = async (req, res, pathname, url) => {
     }
     if (!action && req.method === "PUT") {
       const input = await body(req);
-      if ((!input.title?.trim() && input.type !== "dynamic") || !input.content?.trim()) return json(res, 400, { error: "标题或正文不能为空" });
+      if (!input.rawDocument && ((!input.title?.trim() && input.type !== "dynamic") || !input.content?.trim())) return json(res, 400, { error: "标题或正文不能为空" });
+      if (input.rawDocument) {
+        const rawMatch = String(input.rawDocument).match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+        if (!rawMatch) return json(res, 400, { error: "Markdown frontmatter 格式不正确" });
+        const metadata = {};
+        for (const line of rawMatch[1].split(/\r?\n/)) { const separator = line.indexOf(":"); if (separator > 0) metadata[line.slice(0, separator).trim()] = parseValue(line.slice(separator + 1)); }
+        const content = rawMatch[2].replace(/^\r?\n/, "");
+        const title = String(metadata.title || projectItem.title || "未命名文章");
+        const status = projectItem.type === "article" && metadata.draft === true ? "draft" : "published";
+        writeProjectItem(projectItem, { ...input, title, content, description: metadata.description || "", category: metadata.category || "", tags: Array.isArray(metadata.tags) ? metadata.tags : [], location: metadata.location || "", metadata }, status);
+        return json(res, 200, scanProject().items.find((item) => item.id === id));
+      }
       writeProjectItem(projectItem, input, input.status === "published" ? "published" : "draft");
       return json(res, 200, scanProject().items.find((item) => item.id === id));
     }

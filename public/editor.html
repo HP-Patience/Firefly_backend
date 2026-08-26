@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>编辑内容 - Firefly Hub</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/workspace.css" />
+    <link rel="stylesheet" href="/workspace-fixes.css" />
+    <link rel="stylesheet" href="/editor.css" />
+  </head>
+  <body class="editor-page">
+    <header class="editor-header"><div class="editor-file"><span class="file-icon">▤</span><strong id="editor-filename">加载中...</strong><span class="file-size" id="editor-size">--</span></div><div class="editor-actions"><button id="back-button">▣ 返回列表</button><button id="fullscreen-button">□ 全屏模式</button><button id="save-button" class="save-button">▣ 保存文章</button><button id="delete-button" class="delete-button">⌫ 删除文章</button></div></header>
+    <section class="editor-toolbar"><div class="editor-modes"><button id="edit-mode" class="mode-button active">▧ 编辑</button><button id="preview-mode" class="mode-button">◉ 预览</button><span class="line-count" id="line-count">0 行</span></div><div class="format-tools"><button data-wrap="# " title="一级标题">H1</button><button data-wrap="## " title="二级标题">H2</button><button data-wrap="### " title="三级标题">H3</button><i></i><button data-pair="**" title="粗体">B</button><button data-pair="*" title="斜体"><em>I</em></button><button data-pair="`" title="行内代码">&lt;&gt;</button><i></i><button data-prefix="- " title="无序列表">☷</button><button data-prefix="1. " title="有序列表">≣</button><button data-pair="[]()" title="链接">↗</button><button data-image title="图片">▧</button><button data-table title="表格">▦</button><button data-prefix="> " title="引用">❯</button><button data-prefix="---\n" title="分隔线">―</button></div></section>
+    <main class="editor-main"><aside class="line-numbers" id="line-numbers">1</aside><textarea id="editor-textarea" spellcheck="false" aria-label="Markdown 编辑器"></textarea><article id="editor-preview" class="editor-preview hidden"></article></main>
+    <div class="editor-status" id="editor-status"></div>
+    <script src="/editor.js"></script>
+  </body>
+</html>
