@@ -13,6 +13,8 @@
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",
     "@phosphor-icons/web": "^2.1.2",
-    "marked": "^16.4.2"
+    "katex": "^0.16.47",
+    "marked": "^16.4.2",
+    "marked-katex-extension": "^5.1.12"
   }
 }

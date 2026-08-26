@@ -5,18 +5,22 @@ import { dirname, extname, join, normalize, relative, resolve } from "node:path"
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { marked } from "marked";
+import markedKatex from "marked-katex-extension";
+import "katex/dist/contrib/mhchem.mjs";
 
 const execFileAsync = promisify(execFile);
 const root = fileURLToPath(new URL(".", import.meta.url));
 const publicDir = join(root, "public");
 const vendorRoots = {
   "/vendor/geist/": join(root, "node_modules", "@fontsource-variable", "geist"),
-  "/vendor/phosphor/": join(root, "node_modules", "@phosphor-icons", "web", "src")
+  "/vendor/phosphor/": join(root, "node_modules", "@phosphor-icons", "web", "src"),
+  "/vendor/katex/": join(root, "node_modules", "katex", "dist")
 };
 const dataDir = join(root, "data");
 const dataFile = join(dataDir, "content.json");
 const settingsFile = join(dataDir, "settings.json");
 const port = Number(process.env.PORT || 8787);
+marked.use(markedKatex({ throwOnError: false, nonStandard: true, strict: "ignore" }));
 const artifactRemote = "https://github.com/HP-Patience/blog-firefly-dist.git";
 const eventClients = new Set();
 let projectWatcher = null;

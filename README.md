@@ -76,13 +76,14 @@ dist/                   构建产物
 - 无序列表和有序列表
 - 链接、图片和表格
 - 代码块、引用和分隔线
+- KaTeX 行内公式 `$...$` 和块级公式 `$$...$$`
 - 本地图片上传到当前文章目录的 `assets/`
 - 编辑区与预览区同步滚动
 - `Ctrl + S` 保存
 - 浏览器原生 `Ctrl + Z` 撤销和 `Ctrl + Y` 恢复
 - 使用系统默认外部编辑器打开源文件
 
-Markdown 由 `marked` 渲染。代码管理界面使用本地 Geist Variable 字体和 Phosphor Icons，不依赖 CDN。
+Markdown 由 `marked` 渲染，数学公式由 `marked-katex-extension` 和与 Firefly 同版本的 `katex` 渲染。KaTeX 样式及字体、本地 Geist Variable 字体和 Phosphor Icons 均由后台本地提供，不依赖 CDN。
 
 ## 文件保存与备份
 
