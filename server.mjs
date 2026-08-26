@@ -9,6 +9,10 @@ import { marked } from "marked";
 const execFileAsync = promisify(execFile);
 const root = fileURLToPath(new URL(".", import.meta.url));
 const publicDir = join(root, "public");
+const vendorRoots = {
+  "/vendor/geist/": join(root, "node_modules", "@fontsource-variable", "geist"),
+  "/vendor/phosphor/": join(root, "node_modules", "@phosphor-icons", "web", "src")
+};
 const dataDir = join(root, "data");
 const dataFile = join(dataDir, "content.json");
 const settingsFile = join(dataDir, "settings.json");
@@ -369,6 +373,16 @@ const api = async (req, res, pathname, url) => {
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+  const vendorPrefix = Object.keys(vendorRoots).find((prefix) => url.pathname.startsWith(prefix));
+  if (vendorPrefix) {
+    const vendorRoot = resolve(vendorRoots[vendorPrefix]);
+    const file = resolve(join(vendorRoot, url.pathname.slice(vendorPrefix.length)));
+    if (!file.startsWith(vendorRoot) || !existsSync(file) || !statSync(file).isFile()) return json(res, 404, { error: "资源不存在" });
+    const types = { ".css": "text/css; charset=utf-8", ".woff2": "font/woff2", ".woff": "font/woff", ".ttf": "font/ttf", ".svg": "image/svg+xml" };
+    res.writeHead(200, { "Content-Type": types[extname(file).toLowerCase()] || "application/octet-stream", "Cache-Control": "public, max-age=31536000, immutable" });
+    res.end(readFileSync(file));
+    return;
+  }
   if (url.pathname.startsWith("/api/")) {
     try { await api(req, res, url.pathname, url); } catch (error) { json(res, 400, { error: error.message || "请求处理失败" }); }
     return;
