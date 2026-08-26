@@ -121,8 +121,8 @@ const parseValue = (raw) => {
   if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) return value.slice(1, -1);
   return value;
 };
-const parseMarkdown = (file) => {
-  const raw = readFileSync(file, "utf8").replace(/^\uFEFF/, "");
+const parseMarkdownSource = (source) => {
+  const raw = String(source).replace(/^\uFEFF/, "");
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
   if (!match) return { meta: {}, content: raw, raw };
   const meta = {};
@@ -132,6 +132,7 @@ const parseMarkdown = (file) => {
   }
   return { meta, content: match[2].replace(/^\r?\n/, ""), raw };
 };
+const parseMarkdown = (file) => parseMarkdownSource(readFileSync(file, "utf8"));
 const yamlValue = (value, key) => {
   if (Array.isArray(value)) return JSON.stringify(value);
   if (typeof value === "boolean" || typeof value === "number") return String(value);
@@ -139,6 +140,12 @@ const yamlValue = (value, key) => {
   return JSON.stringify(String(value ?? ""));
 };
 const markdownText = (meta, content) => `---\n${Object.entries(meta).filter(([, value]) => value !== undefined && value !== null && value !== "").map(([key, value]) => `${key}: ${yamlValue(value, key)}`).join("\n")}\n---\n\n${content.trim()}\n`;
+const dynamicMetadata = (item) => {
+  const metadata = item.metadata || item.frontmatter || {};
+  const location = String(item.location || metadata.location || "").trim();
+  return { published: metadata.published || dateText(item.createdAt || new Date()), pinned: Boolean(metadata.pinned), ...(location ? { location } : {}) };
+};
+const hydrateLocalItem = (item) => item.type === "dynamic" ? { ...item, metadata: dynamicMetadata(item), raw: markdownText(dynamicMetadata(item), item.content) } : item;
 const replaceFrontmatter = (raw, updates, content) => {
   const match = raw.match(/^(---\r?\n)([\s\S]*?)(\r?\n---\r?\n?)([\s\S]*)$/);
   if (!match) return markdownText(updates, content);
@@ -426,7 +433,7 @@ const api = async (req, res, pathname, url) => {
     try { if (process.platform === "win32") await run("cmd.exe", ["/c", "start", "", file], base); else await run("xdg-open", [file], base); return json(res, 200, { ok: true }); } catch (error) { return json(res, 400, { error: error.message }); }
   }
   if (pathname === "/api/content" && req.method === "GET") {
-    const items = [...scanProject().items, ...readContent()].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    const items = [...scanProject().items, ...readContent().map(hydrateLocalItem)].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     return json(res, 200, items);
   }
   if (pathname === "/api/content" && req.method === "POST") {
@@ -437,7 +444,10 @@ const api = async (req, res, pathname, url) => {
     if (projectItem) return json(res, 201, projectItem);
     const now = new Date().toISOString();
     const title = input.title?.trim() || `动态 ${now.slice(0, 10)}`;
-    const item = { id: crypto.randomUUID(), type: input.type === "dynamic" ? "dynamic" : "article", title, slug: slugify(input.slug || title), description: String(input.description || "").trim(), category: String(input.category || "").trim(), tags: Array.isArray(input.tags) ? input.tags.filter(Boolean) : [], location: String(input.location || "").trim(), metadata: input.metadata || {}, content: input.content, status, publishedAt: status === "published" ? now : null, createdAt: now, updatedAt: now };
+    const type = input.type === "dynamic" ? "dynamic" : "article";
+    const location = String(input.location || "").trim();
+    const metadata = type === "dynamic" ? { published: input.metadata?.published || dateText(now), pinned: Boolean(input.metadata?.pinned), ...(location ? { location } : {}) } : (input.metadata || {});
+    const item = { id: crypto.randomUUID(), type, title, slug: slugify(input.slug || title), description: String(input.description || "").trim(), category: String(input.category || "").trim(), tags: Array.isArray(input.tags) ? input.tags.filter(Boolean) : [], location, metadata, content: input.content, status, publishedAt: status === "published" ? now : null, createdAt: now, updatedAt: now };
     const items = readContent(); items.push(item); saveContent(items);
     return json(res, 201, item);
   }
@@ -448,7 +458,7 @@ const api = async (req, res, pathname, url) => {
   const projectItem = scanProject().items.find((item) => item.id === id);
   if (!action && req.method === "GET") {
     const found = projectItem || readContent().find((item) => item.id === id);
-    return found ? json(res, 200, found) : json(res, 404, { error: "内容不存在" });
+    return found ? json(res, 200, projectItem ? found : hydrateLocalItem(found)) : json(res, 404, { error: "内容不存在" });
   }
   if (projectItem) {
     if (action && req.method === "POST") {
@@ -496,7 +506,17 @@ const api = async (req, res, pathname, url) => {
     return json(res, 200, items[index]);
   }
   if (!action && req.method === "PUT") {
-    const input = await body(req); const previous = items[index]; const title = input.title?.trim() || previous.title; const status = input.status === "published" ? "published" : "draft";
+    const input = await body(req); const previous = items[index];
+    if (input.rawDocument) {
+      const parsed = parseMarkdownSource(input.rawDocument);
+      if (!Object.keys(parsed.meta).length) return json(res, 400, { error: "Markdown frontmatter 格式不正确" });
+      const title = previous.type === "dynamic" ? (plainMarkdown(parsed.content).slice(0, 34) || previous.title) : String(parsed.meta.title || previous.title);
+      const status = previous.type === "dynamic" ? previous.status : (parsed.meta.draft === true ? "draft" : "published");
+      items[index] = { ...previous, title, content: parsed.content, metadata: parsed.meta, location: String(parsed.meta.location || previous.location || ""), status, publishedAt: status === "published" ? (previous.publishedAt || new Date().toISOString()) : null, updatedAt: new Date().toISOString() };
+      saveContent(items);
+      return json(res, 200, hydrateLocalItem(items[index]));
+    }
+    const title = input.title?.trim() || previous.title; const status = input.status === "published" ? "published" : "draft";
     items[index] = { ...previous, ...input, id, title, status, publishedAt: status === "published" ? (previous.publishedAt || new Date().toISOString()) : null, updatedAt: new Date().toISOString() }; saveContent(items);
     return json(res, 200, items[index]);
   }
