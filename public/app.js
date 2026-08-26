@@ -27,7 +27,8 @@ const managementOutput = (message) => { $("#management-output").textContent = me
 const appendManagementOutput = (text) => { const output = $("#management-output"); output.textContent += text; output.scrollTop = output.scrollHeight; };
 const streamAction = async (action, payload = {}, button = null, successMessage = "命令执行完成") => {
   const original = button?.innerHTML;
-  if (button) button.disabled = true;
+  const managementButtons = [...document.querySelectorAll(".management-actions button")];
+  managementButtons.forEach((item) => { item.disabled = true; });
   managementOutput(`$ ${action}\n\n`);
   try {
     const response = await fetch("/api/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, ...payload }) });
@@ -56,7 +57,8 @@ const streamAction = async (action, payload = {}, button = null, successMessage 
     toast(error.message);
     return false;
   } finally {
-    if (button) { button.disabled = false; button.innerHTML = original; }
+    managementButtons.forEach((item) => { item.disabled = false; });
+    if (button) button.innerHTML = original;
   }
 };
 $("#source-status").onclick = () => streamAction("source-status", {}, $("#source-status"), "源码状态读取完成");
@@ -66,6 +68,7 @@ $("#artifact-add").onclick = () => streamAction("artifact-add", {}, $("#artifact
 const askAction = ({ title, message, input = false, value = "", confirmText = "确认", danger = false, kicker = "CONFIRM ACTION" }) => new Promise((resolve) => { const dialog = $("#action-dialog"); dialog.returnValue = ""; $("#action-title").textContent = title; $("#action-message").textContent = message; $("#action-kicker").textContent = kicker; $("#action-input-wrap").classList.toggle("hidden", !input); $("#action-input").value = value; $("#action-confirm").textContent = confirmText; $("#action-confirm").classList.toggle("danger-button", danger); $("#action-confirm").classList.toggle("primary", !danger); dialog.showModal(); if (input) setTimeout(() => $("#action-input").select(), 0); dialog.onclose = () => resolve(dialog.returnValue === "confirm" ? (input ? $("#action-input").value.trim() : true) : null); });
 $("#source-commit").onclick = async () => { const message = await askAction({ title: "提交源码", message: "提交当前暂存区中的源码变更。", input: true, value: "content: update from Firefly studio", confirmText: "创建提交", kicker: "GIT COMMIT" }); if (message) streamAction("source-commit", { message }, $("#source-commit"), "源码提交完成"); };
 $("#source-push").onclick = () => streamAction("source-push", {}, $("#source-push"), "源码推送完成");
+$("#run-check").onclick = () => streamAction("artifact-check", {}, $("#run-check"), "项目检查完成");
 $("#run-build").onclick = () => streamAction("artifact-build", {}, $("#run-build"), "构建完成，dist 已更新");
 $("#artifact-commit").onclick = async () => { const message = await askAction({ title: "提交构建产物", message: "提交 dist 仓库当前暂存区中的变更。", input: true, value: "deploy: update dist", confirmText: "创建提交", kicker: "GIT COMMIT" }); if (message) streamAction("artifact-commit", { message }, $("#artifact-commit"), "构建产物提交完成"); };
 $("#artifact-push").onclick = () => streamAction("artifact-push", {}, $("#artifact-push"), "构建产物推送完成");

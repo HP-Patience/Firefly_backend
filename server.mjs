@@ -292,14 +292,9 @@ const api = async (req, res, pathname, url) => {
         else if (input.action === "artifact-add") code = await runStreaming("git", ["add", "-A"], directory, res);
         else if (input.action === "artifact-commit") code = await runStreaming("git", ["commit", "-m", String(input.message || `deploy: ${dateText().replace(/[: ]/g, "-")}`)], directory, res);
         else if (input.action === "artifact-push") code = await streamArtifactPush(directory, res);
-        else if (input.action === "artifact-build") {
-          streamEvent(res, { type: "output", data: "$ pnpm check\n" });
-          code = await streamPnpm(["check"], base, res);
-          if (code === 0) {
-            streamEvent(res, { type: "output", data: "\n$ pnpm build\n" });
-            code = await streamPnpm(["build"], base, res);
-          }
-        } else throw new Error("不支持的流式操作");
+        else if (input.action === "artifact-check") code = await streamPnpm(["check"], base, res);
+        else if (input.action === "artifact-build") code = await streamPnpm(["build"], base, res);
+        else throw new Error("不支持的流式操作");
       }
       streamEvent(res, { type: "done", ok: code === 0, code });
     } catch (error) {
