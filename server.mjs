@@ -289,7 +289,7 @@ const api = async (req, res, pathname, url) => {
     let sourcePath = ""; let fileName = ""; let fileData = null;
     for (const part of parts) { const split = part.indexOf(Buffer.from("\r\n\r\n")); if (split < 0) continue; const headers = part.subarray(0, split).toString("utf8"); const data = part.subarray(split + 4, part.length - 2); const name = headers.match(/name="([^"]+)"/i)?.[1]; const filename = headers.match(/filename="([^"]*)"/i)?.[1]; if (name === "sourcePath") sourcePath = data.toString("utf8"); if (filename) { fileName = filename; fileData = data; } }
     if (!fileData || !sourcePath.startsWith(base)) return json(res, 400, { error: "上传内容无效" });
-    const safeName = fileName.replace(/[^\w\-.\u4e00-\u9fff ]/g, "_"); const targetDir = join(sourcePath.replace(/[^\\/]+$/, ""), "assets"); mkdirSync(targetDir, { recursive: true }); const target = join(targetDir, safeName); atomicWrite(target, fileData.toString("binary"), false); emitChange();
+    const safeName = fileName.replace(/[^\w\-.\u4e00-\u9fff ]/g, "_"); const targetDir = join(sourcePath.replace(/[^\\/]+$/, ""), "assets"); mkdirSync(targetDir, { recursive: true }); const target = join(targetDir, safeName); atomicWrite(target, fileData, false); emitChange();
     return json(res, 201, { name: safeName, path: `./assets/${safeName}` });
   }
   if (pathname === "/api/project/open-external" && req.method === "POST") {
