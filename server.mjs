@@ -198,6 +198,19 @@ const run = async (command, args, cwd) => {
   const result = await execFileAsync(command, args, { cwd, windowsHide: true, maxBuffer: 4 * 1024 * 1024 });
   return { output: `${result.stdout || ""}${result.stderr || ""}` };
 };
+const pushCurrentBranch = async (cwd) => {
+  const branch = (await run("git", ["branch", "--show-current"], cwd)).output.trim();
+  if (!branch) throw new Error("当前仓库处于 detached HEAD，无法自动推送");
+  try {
+    await run("git", ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], cwd);
+    return run("git", ["push"], cwd);
+  } catch {
+    const remotes = (await run("git", ["remote"], cwd)).output.split(/\r?\n/).map((remote) => remote.trim()).filter(Boolean);
+    if (!remotes.length) throw new Error("当前仓库没有配置远程仓库");
+    const remote = remotes.includes("origin") ? "origin" : remotes[0];
+    return run("git", ["push", "--set-upstream", remote, branch], cwd);
+  }
+};
 const runPnpm = (args, cwd) => process.platform === "win32" ? run(process.env.ComSpec || "cmd.exe", ["/d", "/s", "/c", `pnpm ${args.join(" ")}`], cwd) : run("pnpm", args, cwd);
 
 const api = async (req, res, pathname, url) => {
@@ -273,7 +286,7 @@ const api = async (req, res, pathname, url) => {
   }
   if (pathname === "/api/git/push" && req.method === "POST") {
     const base = projectPath(); if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
-    try { return json(res, 200, { ok: true, ...(await run("git", ["push"], base)) }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
+    try { return json(res, 200, { ok: true, ...(await pushCurrentBranch(base)) }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
   }
   if (pathname === "/api/git/artifact-commit" && req.method === "POST") {
     try { const directory = await ensureArtifactRepo(); const input = await body(req); await run("git", ["add", "-A"], directory); const result = await run("git", ["commit", "-m", String(input.message || `deploy: ${dateText().replace(/[: ]/g, "-")}`)], directory); return json(res, 200, { ok: true, ...result, repository: artifactRemote }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
