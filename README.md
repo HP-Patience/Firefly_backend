@@ -12,7 +12,8 @@ Firefly Hub 是一个仅在本机运行的 Firefly 博客内容工作台，用�
 ## 安装与启动
 
 ```powershell
-cd C:\Users\wjx\Desktop\new_blog\Firefly_backend
+git clone https://github.com/HP-Patience/Firefly_Hub.git
+cd Firefly_Hub
 npm install
 npm run dev
 ```
@@ -90,7 +91,7 @@ Markdown 由 `marked` 渲染。代码管理界面使用本地 Geist Variable 字
 保存前的备份位于：
 
 ```text
-Firefly_backend/data/backups/
+Firefly_Hub/data/backups/
 ```
 
 备份不会放进 Firefly 的 `src/content`，因此不会被 Astro 构建扫描。`data/backups/` 已加入后台仓库的 `.gitignore`。
@@ -204,5 +205,5 @@ data/backups/         内容备份
 ## 后台远程仓库
 
 ```text
-https://github.com/HP-Patience/Firefly_backend
+https://github.com/HP-Patience/Firefly_Hub
 ```
