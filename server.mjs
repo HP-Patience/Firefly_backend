@@ -248,6 +248,10 @@ const api = async (req, res, pathname, url) => {
     const base = projectPath(); if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
     try { const result = await run("git", ["-c", "core.quotePath=false", "status", "--short"], base); result.output = result.output.split(/\r?\n/).filter((line) => !line.trim().endsWith(".bak") && !line.includes(".playwright-mcp/")).join("\n").trim(); return json(res, 200, result); } catch (error) { return json(res, 400, { error: error.message }); }
   }
+  if (pathname === "/api/git/add" && req.method === "POST") {
+    const base = projectPath(); if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
+    try { const result = await run("git", ["add", "-A"], base); return json(res, 200, { ok: true, ...result }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
+  }
   if (pathname === "/api/git/remote/add" && req.method === "POST") {
     const input = await body(req); const alias = String(input.alias || "origin").trim(); const remote = String(input.url || "").trim();
     if (!/^[\w.-]+$/.test(alias) || !/^https:\/\//i.test(remote)) return json(res, 400, { error: "请输入有效的远程别名和 HTTPS 仓库地址" });
@@ -259,6 +263,9 @@ const api = async (req, res, pathname, url) => {
   }
   if (pathname === "/api/git/artifact-status" && req.method === "GET") {
     try { const directory = await ensureArtifactRepo(); const result = await run("git", ["-c", "core.quotePath=false", "status", "--short"], directory); return json(res, 200, { ...result, repository: artifactRemote, directory }); } catch (error) { return json(res, 400, { error: error.message }); }
+  }
+  if (pathname === "/api/git/artifact-add" && req.method === "POST") {
+    try { const directory = await ensureArtifactRepo(); const result = await run("git", ["add", "-A"], directory); return json(res, 200, { ok: true, ...result, repository: artifactRemote }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
   }
   if (pathname === "/api/git/commit" && req.method === "POST") {
     const base = projectPath(); if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
