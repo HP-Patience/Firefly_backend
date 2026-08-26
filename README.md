@@ -2,6 +2,10 @@
 
 Firefly Hub 是一个仅在本机运行的 Firefly 博客内容工作台，用于管理文章、动态、图片、源码仓库和静态构建产物。项目不包含登录、注册或权限系统。
 
+## 界面预览
+
+![Firefly Hub 首页](docs/images/homepage.png)
+
 ## 环境要求
 
 - Windows
@@ -50,7 +54,7 @@ dist/                   构建产物
 支持两种内容类型：
 
 - 文章：支持草稿、发布、撤回、分类、标签和完整 frontmatter。
-- 动态：支持正文、图片、位置、发布时间和发布。
+- 动态：支持正文、图片、位置、发布时间、发布和撤回。
 
 主要功能：
 
@@ -84,6 +88,14 @@ dist/                   构建产物
 - 使用系统默认外部编辑器打开源文件
 
 Markdown 由 `marked` 渲染，数学公式由 `marked-katex-extension` 和与 Firefly 同版本的 `katex` 渲染。KaTeX 样式及字体、本地 Geist Variable 字体和 Phosphor Icons 均由后台本地提供，不依赖 CDN。
+
+### 实时编辑预览
+
+![Markdown 实时编辑预览](docs/images/live-editor-preview.png)
+
+### 独立预览页
+
+![文章独立预览页](docs/images/article-preview.png)
 
 ## 文件保存与备份
 
@@ -147,6 +159,8 @@ git push --set-upstream <别名> <当前分支>
 - `git push --set-upstream`：完成首次推送，并绑定本地分支与远程分支。
 - `git remote -v`：查看当前仓库配置的远程地址。
 
+![远程仓库配置](docs/images/remote-repository.png)
+
 ## 代码文件管理
 
 源码和 dist 各自提供独立命令按钮：
@@ -168,6 +182,8 @@ git push
 首次源码推送如果没有 upstream，后台会自动执行 `git push --set-upstream`。
 
 dist 推送会先执行 `git fetch`，再使用 `--force-with-lease` 更新构建仓库，避免使用无保护的强制推送。
+
+![代码文件管理](docs/images/code-management.png)
 
 ## 检查与构建
 
