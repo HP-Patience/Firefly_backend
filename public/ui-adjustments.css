@@ -1,8 +1,23 @@
-.help-button .ph-question-mark::before {
+.help-button {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.help-button .ph {
+  display: block;
+  width: auto;
+  height: auto;
+  line-height: 1;
+}
+
+.help-button .ph::before {
   content: "?";
   font-family: "Geist Variable", sans-serif !important;
   font-size: 0.75rem;
   font-weight: 750;
+  line-height: 1;
 }
 
 .search-box {
