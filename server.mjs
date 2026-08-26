@@ -231,6 +231,15 @@ const pushCurrentBranch = async (cwd) => {
     return run("git", ["push", "--set-upstream", remote, branch], cwd);
   }
 };
+const pushArtifactBranch = async (cwd) => {
+  const branch = (await run("git", ["branch", "--show-current"], cwd)).output.trim() || "master";
+  try {
+    await run("git", ["fetch", "origin", branch], cwd);
+    return run("git", ["push", "--force-with-lease", "--set-upstream", "origin", branch], cwd);
+  } catch {
+    return run("git", ["push", "--set-upstream", "origin", branch], cwd);
+  }
+};
 const runPnpm = (args, cwd) => process.platform === "win32" ? run(process.env.ComSpec || "cmd.exe", ["/d", "/s", "/c", `pnpm ${args.join(" ")}`], cwd) : run("pnpm", args, cwd);
 
 const api = async (req, res, pathname, url) => {
@@ -326,7 +335,7 @@ const api = async (req, res, pathname, url) => {
     try { const directory = await ensureArtifactRepo(); const input = await body(req); const result = await run("git", ["commit", "-m", String(input.message || `deploy: ${dateText().replace(/[: ]/g, "-")}`)], directory); return json(res, 200, { ok: true, ...result, repository: artifactRemote }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
   }
   if (pathname === "/api/git/artifact-push" && req.method === "POST") {
-    try { const directory = await ensureArtifactRepo(); const result = await run("git", ["push", "--force-with-lease", "origin", "master"], directory); return json(res, 200, { ok: true, ...result, repository: artifactRemote }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
+    try { const directory = await ensureArtifactRepo(); const result = await pushArtifactBranch(directory); return json(res, 200, { ok: true, ...result, repository: artifactRemote }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
   }
   if (pathname === "/api/project/deploy" && req.method === "POST") {
     const base = projectPath(); if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
@@ -335,7 +344,7 @@ const api = async (req, res, pathname, url) => {
       const directory = await ensureArtifactRepo();
       const status = await run("git", ["status", "--short"], directory);
       if (status.output.trim()) { await run("git", ["add", "-A"], directory); await run("git", ["commit", "-m", `deploy: ${dateText().replace(/[: ]/g, "-")}`], directory); }
-      const push = await run("git", ["push", "--force-with-lease", "origin", "master"], directory);
+      const push = await pushArtifactBranch(directory);
       return json(res, 200, { ok: true, repository: artifactRemote, build: build.output, push: push.output });
     } catch (error) { return json(res, 400, { ok: false, error: error.message, output: error.stdout || error.stderr || "" }); }
   }
