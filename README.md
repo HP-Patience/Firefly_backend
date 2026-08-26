@@ -1,5 +1,13 @@
 # Firefly Hub
 
+[![GitHub Stars](https://img.shields.io/github/stars/HP-Patience/Firefly_Hub?style=flat-square&logo=github)](https://github.com/HP-Patience/Firefly_Hub/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/HP-Patience/Firefly_Hub?style=flat-square&logo=github)](https://github.com/HP-Patience/Firefly_Hub/forks)
+[![Contributors](https://img.shields.io/github/contributors/HP-Patience/Firefly_Hub?style=flat-square)](https://github.com/HP-Patience/Firefly_Hub/graphs/contributors)
+[![Open Issues](https://img.shields.io/github/issues/HP-Patience/Firefly_Hub?style=flat-square)](https://github.com/HP-Patience/Firefly_Hub/issues)
+[![Pull Requests](https://img.shields.io/github/issues-pr/HP-Patience/Firefly_Hub?style=flat-square)](https://github.com/HP-Patience/Firefly_Hub/pulls)
+[![Last Commit](https://img.shields.io/github/last-commit/HP-Patience/Firefly_Hub?style=flat-square)](https://github.com/HP-Patience/Firefly_Hub/commits/main)
+[![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+
 Firefly Hub 是一个仅在本机运行的 Firefly 博客内容工作台，用于管理文章、动态、图片、源码仓库和静态构建产物。项目不包含登录、注册或权限系统。
 
 ## 界面预览
