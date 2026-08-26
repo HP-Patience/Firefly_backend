@@ -2,6 +2,13 @@
   <img src="./assets/readme/hero.svg" width="100%" alt="Firefly Hub：连接 Markdown 写作、实时预览、内容状态、源码仓库与静态构建产物的本地工作台">
 </p>
 
+
+
+<p align="center">
+  <strong>为 Firefly 博客准备的本地内容与发布工作台。</strong><br>
+  写文章、管理动态、实时预览 Markdown，并显式控制源码与构建产物的 Git 流程。
+</p>
+
 <p align="center">
   <a href="https://github.com/HP-Patience/Firefly_Hub/stargazers"><img src="https://img.shields.io/github/stars/HP-Patience/Firefly_Hub?style=flat-square&logo=github" alt="GitHub stars"></a>
   <a href="https://github.com/HP-Patience/Firefly_Hub/forks"><img src="https://img.shields.io/github/forks/HP-Patience/Firefly_Hub?style=flat-square&logo=github" alt="GitHub forks"></a>
@@ -9,11 +16,6 @@
   <a href="https://github.com/HP-Patience/Firefly_Hub/issues"><img src="https://img.shields.io/github/issues/HP-Patience/Firefly_Hub?style=flat-square" alt="Open issues"></a>
   <a href="https://github.com/HP-Patience/Firefly_Hub/commits/main"><img src="https://img.shields.io/github/last-commit/HP-Patience/Firefly_Hub?style=flat-square" alt="Last commit"></a>
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-22%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js 22 or newer"></a>
-</p>
-
-<p align="center">
-  <strong>为 Firefly 博客准备的本地内容与发布工作台。</strong><br>
-  写文章、管理动态、实时预览 Markdown，并显式控制源码与构建产物的 Git 流程。
 </p>
 
 ## 先看它如何工作
