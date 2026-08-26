@@ -294,6 +294,20 @@ const api = async (req, res, pathname, url) => {
     const input = await body(req);
     try { const directory = input.target === "artifact" ? await ensureArtifactRepo() : projectPath(); if (!directory) return json(res, 400, { error: "请先连接 Firefly 项目" }); const result = await run("git", ["-c", "core.quotePath=false", "remote", "-v"], directory); return json(res, 200, { ok: true, ...result, directory }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
   }
+  if (pathname === "/api/git/remote/upstream" && req.method === "POST") {
+    const input = await body(req); const alias = String(input.alias || "origin").trim();
+    if (!/^[\w.-]+$/.test(alias)) return json(res, 400, { error: "请输入有效的远程仓库别名" });
+    try {
+      const directory = input.target === "artifact" ? await ensureArtifactRepo() : projectPath();
+      if (!directory) return json(res, 400, { error: "请先连接 Firefly 项目" });
+      const branch = (await run("git", ["branch", "--show-current"], directory)).output.trim();
+      if (!branch) return json(res, 400, { error: "当前仓库处于 detached HEAD，无法绑定上游分支" });
+      const remotes = (await run("git", ["remote"], directory)).output.split(/\r?\n/).map((remote) => remote.trim()).filter(Boolean);
+      if (!remotes.includes(alias)) return json(res, 400, { error: `远程仓库别名 ${alias} 不存在，请先执行 git remote add` });
+      const result = await run("git", ["push", "--set-upstream", alias, branch], directory);
+      return json(res, 200, { ok: true, ...result, branch, alias, directory });
+    } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
+  }
   if (pathname === "/api/git/artifact-status" && req.method === "GET") {
     try { const directory = await ensureArtifactRepo(); const result = await run("git", ["-c", "core.quotePath=false", "status", "--short"], directory); return json(res, 200, { ...result, repository: artifactRemote, directory }); } catch (error) { return json(res, 400, { error: error.message }); }
   }
