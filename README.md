@@ -1,47 +1,208 @@
-# Firefly 内容后台
+# Firefly Hub
 
-本项目是一个仅供本地使用的 Firefly 内容创作后台，不包含登录、注册和权限系统。可以通过 Windows 文件夹选择器连接已有 Firefly 项目，直接读取和维护项目中的文章与动态文件。
+Firefly Hub 是一个仅在本机运行的 Firefly 博客内容工作台，用于管理文章、动态、图片、源码仓库和静态构建产物。项目不包含登录、注册或权限系统。
 
-## 启动
+## 环境要求
 
-要求 Node.js 22 或更高版本：
+- Windows
+- Node.js 22 或更高版本
+- 已安装 `git`
+- 已安装 `pnpm`，用于检查和构建 Firefly
 
-```bash
+## 安装与启动
+
+```powershell
 cd C:\Users\wjx\Desktop\new_blog\Firefly_backend
+npm install
 npm run dev
 ```
 
-然后访问 <http://127.0.0.1:8787/>。
+访问 <http://127.0.0.1:8787/>。
 
-## 功能
+生产式启动可使用：
 
-- 文章和动态两种内容类型
-- 草稿保存、编辑、删除、发布和撤回
-- Markdown 编辑与简单实时预览
-- 文章描述、分类、标签
-- 动态发布时间记录
-- 标题/正文搜索和状态筛选
-- 所有数据本地 JSON 持久化
-- 选择并记住 Firefly 项目文件夹
-- 扫描 `src/content/posts` 中的文章和关联图片
-- 扫描 `src/content/dynamic` 中的动态
-- 直接编辑 Firefly 项目中的 Markdown 源文件
-- 使用 `marked` 进行编辑器和独立预览页的 Markdown 渲染
-- 上传图片到当前文章目录的 `assets` 文件夹
-- 监听 Firefly 内容目录并实时刷新后台
-- 独立文章预览页
-- Git 状态、提交和推送
-- 源码仓库与构建产物仓库分开管理
-- 发布前执行 Firefly `pnpm check` 和 `pnpm build`
-- 原子写入、旧文件 `.bak` 备份和文件来源显示
+```powershell
+npm start
+```
 
-连接项目后，新建或编辑的文章会直接写入 `src/content/posts`，已发布动态会写入 `src/content/dynamic`。动态草稿暂存在 `data/content.json`，发布时再写入 Firefly 项目。
+## 连接 Firefly 项目
 
-## 两个 Git 仓库
+点击左侧项目卡中的“选择文件夹”，选择 Firefly 根目录，例如：
 
-- 源码仓库：`Firefly` → `https://github.com/HP-Patience/blog-firefly.git`
-- 构建仓库：`Firefly/dist` → `https://github.com/HP-Patience/blog-firefly-dist.git`
+```text
+C:\Users\wjx\Desktop\new_blog\Firefly
+```
 
-侧栏中的“提交源码”和“上传源码”只操作源码仓库；“构建并上传”会运行构建，然后只提交和推送 `dist` 构建仓库。首次查看或上传构建产物时，后台会自动给 `dist` 初始化独立 Git 仓库并绑定构建远程。
+后台会读取：
 
-编辑已有文件时会保留原 frontmatter 的字段顺序、注释和未编辑字段，只更新后台修改的字段。原文件写入前会保留为同名 `.bak` 文件。
+```text
+src/content/posts/      文章和文章资源
+src/content/dynamic/    动态
+public/                 公共静态资源
+dist/                   构建产物
+```
+
+项目路径保存在 `data/settings.json`，该文件不会提交到 Git。
+
+## 内容管理
+
+支持两种内容类型：
+
+- 文章：支持草稿、发布、撤回、分类、标签和完整 frontmatter。
+- 动态：支持正文、图片、位置、发布时间和发布。
+
+主要功能：
+
+- 按文章、动态和草稿筛选
+- 搜索标题和正文
+- 按更新时间升序或降序排列
+- 点击内容行进入独立编辑器
+- 创建、保存、发布、撤回和删除内容
+- 外部文件变更后自动刷新列表
+
+## Markdown 编辑器
+
+独立编辑器采用左右双栏：
+
+```text
+左侧：完整 Markdown 源文件和行号
+右侧：实时 Markdown 预览
+```
+
+编辑器支持：
+
+- 标题、粗体、斜体和行内代码
+- 无序列表和有序列表
+- 链接、图片和表格
+- 代码块、引用和分隔线
+- 本地图片上传到当前文章目录的 `assets/`
+- 编辑区与预览区同步滚动
+- `Ctrl + S` 保存
+- 浏览器原生 `Ctrl + Z` 撤销和 `Ctrl + Y` 恢复
+- 使用系统默认外部编辑器打开源文件
+
+Markdown 由 `marked` 渲染。代码管理界面使用本地 Geist Variable 字体和 Phosphor Icons，不依赖 CDN。
+
+## 文件保存与备份
+
+文章写入使用临时文件替换，避免写入过程中产生半截文件。
+
+保存前的备份位于：
+
+```text
+Firefly_backend/data/backups/
+```
+
+备份不会放进 Firefly 的 `src/content`，因此不会被 Astro 构建扫描。`data/backups/` 已加入后台仓库的 `.gitignore`。
+
+## 源码与 dist 双仓库
+
+Firefly Hub 将源码和构建产物作为两个独立 Git 仓库管理。
+
+### 源码仓库
+
+工作目录：
+
+```text
+Firefly/
+```
+
+典型远程：
+
+```text
+https://github.com/HP-Patience/blog-firefly.git
+```
+
+### 构建产物仓库
+
+工作目录：
+
+```text
+Firefly/dist/
+```
+
+典型远程：
+
+```text
+https://github.com/HP-Patience/blog-firefly-dist.git
+```
+
+首次使用 dist 时，后台会将其初始化为独立 Git 仓库。
+
+## 远程仓库配置
+
+“选择远程仓库”弹窗提供三个操作：
+
+```bash
+git remote -v
+git remote add <别名> <HTTPS 地址>
+git push --set-upstream <别名> <当前分支>
+```
+
+它们的区别：
+
+- `git remote add`：保存远程仓库地址。
+- `git push --set-upstream`：完成首次推送，并绑定本地分支与远程分支。
+- `git remote -v`：查看当前仓库配置的远程地址。
+
+## 代码文件管理
+
+源码和 dist 各自提供独立命令按钮：
+
+```bash
+git status --short
+git add -A
+git commit
+git push
+```
+
+这些按钮不会合并步骤：
+
+1. `git status --short` 查看变更。
+2. `git add -A` 将变更加入暂存区。
+3. `git commit` 只提交已暂存内容。
+4. `git push` 只推送已有提交。
+
+首次源码推送如果没有 upstream，后台会自动执行 `git push --set-upstream`。
+
+dist 推送会先执行 `git fetch`，再使用 `--force-with-lease` 更新构建仓库，避免使用无保护的强制推送。
+
+## 检查与构建
+
+两个命令已经拆分：
+
+```bash
+pnpm check
+pnpm build
+```
+
+- `pnpm check` 只检查 Astro 项目。
+- `pnpm build` 执行全量静态构建、图标生成和 Pagefind 索引。
+
+当前 Firefly 是 Astro 静态输出模式，构建不会根据 Git diff 增量生成页面。实际耗时取决于文章数量、Markdown 插件和静态资源体积。
+
+## 实时命令输出
+
+代码管理弹窗中的 Git、检查和构建命令使用流式子进程执行：
+
+- stdout 和 stderr 实时追加到输出框
+- 自动滚动到最新输出
+- 清理 ANSI 控制字符
+- 显示最终退出码
+- 执行期间禁用其它命令按钮，避免输出混合
+
+## 本地数据
+
+```text
+data/content.json     尚未写入 Firefly 的本地草稿数据
+data/settings.json    当前连接的 Firefly 路径
+data/backups/         内容备份
+```
+
+`settings.json` 和 `backups/` 不会提交到后台远程仓库。
+
+## 后台远程仓库
+
+```text
+https://github.com/HP-Patience/Firefly_backend
+```
