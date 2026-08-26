@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/workspace-fixes.css" />
     <link rel="stylesheet" href="/polish.css" />
     <link rel="stylesheet" href="/precision.css" />
+    <link rel="stylesheet" href="/precision-components.css" />
   </head>
   <body>
     <a class="skip-link" href="#main-content">跳到内容列表</a>
@@ -23,7 +24,7 @@
       </aside>
       <main class="main" id="main-content">
         <header class="content-header"><div><p class="eyebrow">FIREFLY / CONTENT</p><h1 id="page-title">文章列表</h1></div><button class="primary" id="new-button">＋ 创建新内容</button></header>
-        <section class="content-toolbar"><div class="toolbar-left"><button class="select-button">□ 选择</button><div class="tabs"><button class="tab active" data-status="all">全部</button><button class="tab" data-status="published">已发布</button><button class="tab" data-status="draft">草稿</button></div></div><div class="toolbar-right"><input id="search" type="search" placeholder="输入文章标题搜索..." /><span class="content-count" id="content-count">共 0 篇文章</span><span class="sort-label">↓ 按发布日期（降序）</span></div></section>
+        <section class="content-toolbar"><div class="toolbar-left"><div class="tabs"><button class="tab active" data-status="all">全部</button><button class="tab" data-status="published">已发布</button><button class="tab" data-status="draft">草稿</button></div></div><div class="toolbar-right"><input id="search" type="search" placeholder="输入文章标题搜索..." /><span class="content-count" id="content-count">共 0 条内容</span><button class="sort-label" id="sort-toggle">↓ 按更新时间（降序）</button></div></section>
         <section id="content-list" class="content-list"><div class="loading-grid" aria-label="正在加载内容"><div class="loading-card"></div><div class="loading-card"></div><div class="loading-card"></div><div class="loading-card"></div><div class="loading-card"></div><div class="loading-card"></div></div></section>
       </main>
     </div>
@@ -32,6 +33,7 @@
     <div class="modal hidden" id="project-help-modal"><div class="help-panel"><header class="modal-head"><div><p class="eyebrow">PROJECT ACTIONS</p><h2>项目操作说明</h2></div><button class="icon-button" id="close-project-help" aria-label="关闭">×</button></header><div class="help-list"><section><strong>提交&amp;推送源码</strong><p>先提交再推送 Firefly 源码仓库 <code>blog-firefly.git</code>，只处理项目源码文件。</p></section><section><strong>执行构建</strong><p>运行 <code>pnpm check</code> 和 <code>pnpm build</code>，生成最新的 <code>dist</code>，不会上传远程。</p></section><section><strong>提交&amp;推送构建产物</strong><p>只处理 <code>dist</code> 独立仓库，并推送到 <code>blog-firefly-dist.git</code>，不会推送源码。</p></section></div></div></div>
     <div class="modal hidden" id="remote-modal"><div class="help-panel remote-panel"><header class="modal-head"><div><p class="eyebrow">GIT / REMOTE</p><h2 id="remote-title">选择远程仓库</h2></div><button class="icon-button" id="close-remote" aria-label="关闭">×</button></header><div class="field"><label for="remote-alias">远程仓库别名</label><input id="remote-alias" value="origin" placeholder="origin" /></div><div class="field"><label for="remote-url">HTTPS 仓库地址</label><input id="remote-url" placeholder="https://github.com/HP-Patience/demo.git" /></div><div class="remote-actions"><button class="secondary" id="remote-test">测试</button><button class="primary" id="remote-add">添加</button></div><pre class="remote-output" id="remote-output">等待操作...</pre></div></div>
     <div class="modal hidden" id="code-management-modal"><div class="help-panel code-management-panel"><header class="modal-head"><div><p class="eyebrow">CODE FILE MANAGEMENT</p><h2>代码文件管理</h2></div><button class="icon-button" id="close-code-management" aria-label="关闭">×</button></header><section class="management-section" id="source-management-section"><strong>源码：Firefly 项目</strong><p>提交并推送项目源码文件。</p><button class="workflow-button" id="source-submit-push">提交&amp;推送源码</button></section><section class="management-section hidden" id="artifact-management-section"><strong>dist 构建产物：blog-firefly-dist</strong><p>先执行构建，再提交并推送构建产物。</p><div class="workflow-actions"><button class="workflow-button" id="run-build">执行构建</button><button class="workflow-button" id="artifact-submit-push">提交&amp;推送</button></div></section><pre class="management-output" id="management-output">等待操作...</pre></div></div>
+    <dialog class="action-dialog" id="action-dialog"><form method="dialog"><header><span class="dialog-kicker" id="action-kicker">CONFIRM ACTION</span><h2 id="action-title">确认操作</h2><p id="action-message"></p></header><label class="dialog-input hidden" id="action-input-wrap"><span>提交说明</span><input id="action-input" /></label><menu><button value="cancel" class="secondary">取消</button><button value="confirm" class="primary" id="action-confirm">确认</button></menu></form></dialog>
     <div class="toast" id="toast"></div>
     <script src="/app.js"></script>
   </body>
