@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { execFile } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, watch, writeFileSync } from "node:fs";
-import { extname, join, normalize, relative, resolve } from "node:path";
+import { dirname, extname, join, normalize, relative, resolve } from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { marked } from "marked";
@@ -30,7 +30,12 @@ const readJson = (file, fallback) => {
   try { return JSON.parse(readFileSync(file, "utf8")); } catch { return fallback; }
 };
 const atomicWrite = (file, content, backup = true) => {
-  if (backup && existsSync(file)) copyFileSync(file, `${file}.bak`);
+  if (backup && existsSync(file)) {
+    const base = readSettings().projectPath;
+    const backupFile = join(dataDir, "backups", base && file.startsWith(base) ? relative(base, file) : file.replace(/[:\\/]/g, "_"));
+    mkdirSync(dirname(backupFile), { recursive: true });
+    copyFileSync(file, `${backupFile}.bak`);
+  }
   const temporary = `${file}.${process.pid}.tmp`;
   writeFileSync(temporary, content, "utf8");
   renameSync(temporary, file);
@@ -60,6 +65,7 @@ const startProjectWatcher = () => {
   if (projectWatcher) { projectWatcher.close(); projectWatcher = null; }
   const base = projectPath();
   if (!base) return;
+  migrateLegacyBackups(join(base, "src", "content"), base);
   try {
     projectWatcher = watch(join(base, "src", "content"), { recursive: true }, () => { clearTimeout(watcherTimer); watcherTimer = setTimeout(emitChange, 180); });
   } catch { projectWatcher = null; }
@@ -76,6 +82,20 @@ const projectPath = () => {
   return configured;
 };
 const artifactPath = () => { const base = projectPath(); return base ? join(base, "dist") : null; };
+const migrateLegacyBackups = (directory, base) => {
+  if (!existsSync(directory)) return;
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) migrateLegacyBackups(path, base);
+    else if (entry.name.endsWith(".bak")) {
+      const original = path.slice(0, -4);
+      const backupFile = join(dataDir, "backups", relative(base, original));
+      mkdirSync(dirname(backupFile), { recursive: true });
+      copyFileSync(path, `${backupFile}.bak`);
+      unlinkSync(path);
+    }
+  }
+};
 const ensureArtifactRepo = async () => {
   const directory = artifactPath();
   if (!directory || !existsSync(directory)) throw new Error("还没有构建产物，请先运行构建");
