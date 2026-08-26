@@ -1,27 +1,52 @@
-# Firefly Hub
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="Firefly Hub：连接 Markdown 写作、实时预览、内容状态、源码仓库与静态构建产物的本地工作台">
+</p>
 
-[![GitHub Stars](https://img.shields.io/github/stars/HP-Patience/Firefly_Hub?style=flat-square&logo=github)](https://github.com/HP-Patience/Firefly_Hub/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/HP-Patience/Firefly_Hub?style=flat-square&logo=github)](https://github.com/HP-Patience/Firefly_Hub/forks)
-[![Contributors](https://img.shields.io/github/contributors/HP-Patience/Firefly_Hub?style=flat-square)](https://github.com/HP-Patience/Firefly_Hub/graphs/contributors)
-[![Open Issues](https://img.shields.io/github/issues/HP-Patience/Firefly_Hub?style=flat-square)](https://github.com/HP-Patience/Firefly_Hub/issues)
-[![Pull Requests](https://img.shields.io/github/issues-pr/HP-Patience/Firefly_Hub?style=flat-square)](https://github.com/HP-Patience/Firefly_Hub/pulls)
-[![Last Commit](https://img.shields.io/github/last-commit/HP-Patience/Firefly_Hub?style=flat-square)](https://github.com/HP-Patience/Firefly_Hub/commits/main)
-[![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+<p align="center">
+  <a href="https://github.com/HP-Patience/Firefly_Hub/stargazers"><img src="https://img.shields.io/github/stars/HP-Patience/Firefly_Hub?style=flat-square&logo=github" alt="GitHub stars"></a>
+  <a href="https://github.com/HP-Patience/Firefly_Hub/forks"><img src="https://img.shields.io/github/forks/HP-Patience/Firefly_Hub?style=flat-square&logo=github" alt="GitHub forks"></a>
+  <a href="https://github.com/HP-Patience/Firefly_Hub/graphs/contributors"><img src="https://img.shields.io/github/contributors/HP-Patience/Firefly_Hub?style=flat-square" alt="Contributors"></a>
+  <a href="https://github.com/HP-Patience/Firefly_Hub/issues"><img src="https://img.shields.io/github/issues/HP-Patience/Firefly_Hub?style=flat-square" alt="Open issues"></a>
+  <a href="https://github.com/HP-Patience/Firefly_Hub/commits/main"><img src="https://img.shields.io/github/last-commit/HP-Patience/Firefly_Hub?style=flat-square" alt="Last commit"></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-22%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js 22 or newer"></a>
+</p>
 
-Firefly Hub 是一个仅在本机运行的 Firefly 博客内容工作台，用于管理文章、动态、图片、源码仓库和静态构建产物。项目不包含登录、注册或权限系统。
+<p align="center">
+  <strong>为 Firefly 博客准备的本地内容与发布工作台。</strong><br>
+  写文章、管理动态、实时预览 Markdown，并显式控制源码与构建产物的 Git 流程。
+</p>
+## 先看它如何工作
 
-## 界面预览
+连接 Firefly 项目文件夹后，Firefly Hub 会读取文章、动态与资源，并在同一个桌面界面中提供搜索、筛选、编辑、发布、构建和推送入口。
 
-![Firefly Hub 首页](docs/images/homepage.png)
+![Firefly Hub 内容总览：文章状态、更新时间、类型与操作入口](docs/images/homepage.png)
 
-## 环境要求
+## 它解决什么
+
+- **写作与预览在同一处**：左侧编辑完整 Markdown 源文件，右侧实时渲染正文、图片、表格、代码与 KaTeX 公式。
+- **内容状态可逆**：文章和动态都能发布或撤回；动态草稿与已发布文件之间可双向迁移。
+- **Git 操作不藏步骤**：`status`、`add`、`commit`、`push` 各自独立，内容状态变化不会暗中提交或部署。
+- **源码与产物分仓库**：Firefly 源码和 `dist` 构建产物分别管理，构建与推送边界清楚。
+- **本地优先**：无登录、注册和权限系统；项目路径、草稿与备份留在本机。
+
+## 工作流
+
+<p align="center">
+  <img src="./assets/readme/workflow.svg" width="100%" alt="Markdown 内容经过 Firefly Hub 写入 Firefly 源码仓库，再由 Astro 构建并推送到独立 dist 仓库">
+</p>
+
+发布或撤回只改变内容文件及其状态。Git 提交、Astro 检查、静态构建和远程推送都需要明确触发。
+
+## 快速开始
+
+### 环境要求
 
 - Windows
 - Node.js 22 或更高版本
-- 已安装 `git`
-- 已安装 `pnpm`，用于检查和构建 Firefly
+- Git
+- pnpm，用于检查和构建 Firefly 项目
 
-## 安装与启动
+### 启动工作台
 
 ```powershell
 git clone https://github.com/HP-Patience/Firefly_Hub.git
@@ -30,130 +55,64 @@ npm install
 npm run dev
 ```
 
-访问 <http://127.0.0.1:8787/>。
+访问 <http://127.0.0.1:8787/>，点击左侧的“选择文件夹”，连接 Firefly 根目录。生产式启动可使用 `npm start`。
 
-生产式启动可使用：
-
-```powershell
-npm start
-```
-
-## 连接 Firefly 项目
-
-点击左侧项目卡中的“选择文件夹”，选择 Firefly 根目录，例如：
+连接后会读取：
 
 ```text
-C:\Users\wjx\Desktop\new_blog\Firefly
-```
-
-后台会读取：
-
-```text
-src/content/posts/      文章和文章资源
+src/content/posts/      文章与文章资源
 src/content/dynamic/    动态
 public/                 公共静态资源
 dist/                   构建产物
 ```
 
-项目路径保存在 `data/settings.json`，该文件不会提交到 Git。
+项目路径保存在不会提交的 `data/settings.json` 中。
 
-## 内容管理
+## 写作体验
 
-支持两种内容类型：
+![Firefly Hub 左侧 Markdown 源文件与右侧实时预览](docs/images/live-editor-preview.png)
 
-- 文章：支持草稿、发布、撤回、分类、标签和完整 frontmatter。
-- 动态：支持正文、图片、位置、发布时间、发布和撤回。
+编辑器提供行号、同步滚动、原生撤销栈和常用 Markdown 工具栏，并支持：
 
-主要功能：
-
-- 按文章、动态和草稿筛选
-- 搜索标题和正文
-- 按更新时间升序或降序排列
-- 点击内容行进入独立编辑器
-- 创建、保存、发布、撤回和删除内容
-- 外部文件变更后自动刷新列表
-
-## Markdown 编辑器
-
-独立编辑器采用左右双栏：
-
-```text
-左侧：完整 Markdown 源文件和行号
-右侧：实时 Markdown 预览
-```
-
-编辑器支持：
-
-- 标题、粗体、斜体和行内代码
-- 无序列表和有序列表
-- 链接、图片和表格
-- 代码块、引用和分隔线
-- KaTeX 行内公式 `$...$` 和块级公式 `$$...$$`
-- 本地图片上传到当前文章目录的 `assets/`
-- 编辑区与预览区同步滚动
-- `Ctrl + S` 保存
-- 浏览器原生 `Ctrl + Z` 撤销和 `Ctrl + Y` 恢复
+- 标题、粗体、斜体、引用、列表、链接、图片、表格与代码块
+- KaTeX 行内公式 `$...$` 与块级公式 `$$...$$`
+- 将本地图片上传到当前文章目录的 `assets/`
+- `Ctrl + S` 保存，`Ctrl + Z` 撤销，`Ctrl + Y` 恢复
 - 使用系统默认外部编辑器打开源文件
 
-Markdown 由 `marked` 渲染，数学公式由 `marked-katex-extension` 和与 Firefly 同版本的 `katex` 渲染。KaTeX 样式及字体、本地 Geist Variable 字体和 Phosphor Icons 均由后台本地提供，不依赖 CDN。
+Markdown 由 `marked` 渲染，公式由 `marked-katex-extension` 与 `katex` 渲染。Geist Variable、Phosphor Icons、KaTeX 样式和字体均由本地提供，不依赖 CDN。
 
-### 实时编辑预览
+<details>
+<summary><strong>查看独立只读预览</strong></summary>
 
-![Markdown 实时编辑预览](docs/images/live-editor-preview.png)
+![Firefly Hub 独立文章预览页](docs/images/article-preview.png)
 
-### 独立预览页
+</details>
 
-![文章独立预览页](docs/images/article-preview.png)
+## 内容模型
 
-## 文件保存与备份
+| 类型 | 草稿与发布 | 元数据 | 文件位置 |
+| --- | --- | --- | --- |
+| 文章 | 通过 `draft` 状态发布或撤回 | 标题、摘要、分类、标签、作者、封面、来源、置顶、评论 | `src/content/posts/` |
+| 动态 | 本地草稿与已发布 Markdown 双向迁移 | 正文、图片、位置、发布时间、置顶 | `data/content.json` / `src/content/dynamic/` |
 
-文章写入使用临时文件替换，避免写入过程中产生半截文件。
-
-保存前的备份位于：
-
-```text
-Firefly_Hub/data/backups/
-```
-
-备份不会放进 Firefly 的 `src/content`，因此不会被 Astro 构建扫描。`data/backups/` 已加入后台仓库的 `.gitignore`。
+内容总览支持按文章、动态和草稿筛选，搜索标题或正文，按更新时间排序，并在外部文件变化后自动刷新。
 
 ## 源码与 dist 双仓库
 
-Firefly Hub 将源码和构建产物作为两个独立 Git 仓库管理。
-
-### 源码仓库
-
-工作目录：
+Firefly Hub 将两个工作目录视为独立 Git 仓库：
 
 ```text
-Firefly/
+Firefly/         → 源码仓库，例如 blog-firefly
+Firefly/dist/    → 构建产物仓库，例如 blog-firefly-dist
 ```
 
-典型远程：
+每个仓库都提供独立的远程配置与文件管理入口。首次源码推送会在缺少 upstream 时设置上游；dist 推送会先 `fetch`，再使用 `--force-with-lease`，避免无保护的强制推送。
 
-```text
-https://github.com/HP-Patience/blog-firefly.git
-```
+<details>
+<summary><strong>远程仓库配置</strong></summary>
 
-### 构建产物仓库
-
-工作目录：
-
-```text
-Firefly/dist/
-```
-
-典型远程：
-
-```text
-https://github.com/HP-Patience/blog-firefly-dist.git
-```
-
-首次使用 dist 时，后台会将其初始化为独立 Git 仓库。
-
-## 远程仓库配置
-
-“选择远程仓库”弹窗提供三个操作：
+![Firefly Hub 远程仓库配置](docs/images/remote-repository.png)
 
 ```bash
 git remote -v
@@ -161,17 +120,12 @@ git remote add <别名> <HTTPS 地址>
 git push --set-upstream <别名> <当前分支>
 ```
 
-它们的区别：
+</details>
 
-- `git remote add`：保存远程仓库地址。
-- `git push --set-upstream`：完成首次推送，并绑定本地分支与远程分支。
-- `git remote -v`：查看当前仓库配置的远程地址。
+<details>
+<summary><strong>代码文件管理与实时输出</strong></summary>
 
-![远程仓库配置](docs/images/remote-repository.png)
-
-## 代码文件管理
-
-源码和 dist 各自提供独立命令按钮：
+![Firefly Hub 代码文件管理](docs/images/code-management.png)
 
 ```bash
 git status --short
@@ -180,22 +134,11 @@ git commit
 git push
 ```
 
-这些按钮不会合并步骤：
+命令通过流式子进程执行。stdout 与 stderr 会实时追加，ANSI 控制字符会被清理，输出区显示最终退出码；执行期间其它命令按钮会暂时禁用，避免输出混合。
 
-1. `git status --short` 查看变更。
-2. `git add -A` 将变更加入暂存区。
-3. `git commit` 只提交已暂存内容。
-4. `git push` 只推送已有提交。
-
-首次源码推送如果没有 upstream，后台会自动执行 `git push --set-upstream`。
-
-dist 推送会先执行 `git fetch`，再使用 `--force-with-lease` 更新构建仓库，避免使用无保护的强制推送。
-
-![代码文件管理](docs/images/code-management.png)
+</details>
 
 ## 检查与构建
-
-两个命令已经拆分：
 
 ```bash
 pnpm check
@@ -203,32 +146,31 @@ pnpm build
 ```
 
 - `pnpm check` 只检查 Astro 项目。
-- `pnpm build` 执行全量静态构建、图标生成和 Pagefind 索引。
+- `pnpm build` 执行完整静态构建、图标生成与 Pagefind 索引。
 
-当前 Firefly 是 Astro 静态输出模式，构建不会根据 Git diff 增量生成页面。实际耗时取决于文章数量、Markdown 插件和静态资源体积。
+Firefly 使用 Astro 静态输出模式，因此构建是全量的，不会根据 Git diff 增量生成页面。
 
-## 实时命令输出
+## 数据安全
 
-代码管理弹窗中的 Git、检查和构建命令使用流式子进程执行：
-
-- stdout 和 stderr 实时追加到输出框
-- 自动滚动到最新输出
-- 清理 ANSI 控制字符
-- 显示最终退出码
-- 执行期间禁用其它命令按钮，避免输出混合
-
-## 本地数据
+文章保存采用临时文件替换，避免中途写入留下半截文件。保存前的备份位于 `data/backups/`，不会进入 Firefly 的内容目录或被 Astro 扫描。
 
 ```text
-data/content.json     尚未写入 Firefly 的本地草稿数据
+data/content.json     尚未写入 Firefly 的本地草稿
 data/settings.json    当前连接的 Firefly 路径
 data/backups/         内容备份
 ```
 
-`settings.json` 和 `backups/` 不会提交到后台远程仓库。
+`data/settings.json` 和 `data/backups/` 不会提交到远程仓库。删除内容是不可逆操作，执行前会显示确认弹窗。
 
-## 后台远程仓库
+## 适用边界
 
-```text
-https://github.com/HP-Patience/Firefly_Hub
-```
+- 这是本地工具，不提供多用户协作、登录或远程权限控制。
+- 当前面向 Windows 与 Firefly 的目录约定，不是通用 CMS。
+- 内容发布状态不会自动触发 Git、构建或部署。
+- 构建速度取决于文章数量、Markdown 插件和静态资源体积。
+
+## 技术组成
+
+`Node.js HTTP` · `HTML` · `CSS` · `JavaScript` · `marked` · `KaTeX` · `Geist Variable` · `Phosphor Icons`
+
+项目保持无前端框架的本地工作台结构，数据通过 JSON 与 Firefly Markdown 文件持久化。
