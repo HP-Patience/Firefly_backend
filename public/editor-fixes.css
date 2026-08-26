@@ -1,1 +1,2 @@
 .format-tools button svg{width:16px;height:16px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.editor-actions button,.mode-button{display:inline-flex;align-items:center;gap:7px}.editor-actions button svg,.mode-button svg{width:15px;height:15px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.editor-actions .delete-button svg{stroke:#d62626}

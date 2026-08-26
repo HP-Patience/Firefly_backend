@@ -292,6 +292,11 @@ const api = async (req, res, pathname, url) => {
     const safeName = fileName.replace(/[^\w\-.\u4e00-\u9fff ]/g, "_"); const targetDir = join(sourcePath.replace(/[^\\/]+$/, ""), "assets"); mkdirSync(targetDir, { recursive: true }); const target = join(targetDir, safeName); atomicWrite(target, fileData.toString("binary"), false); emitChange();
     return json(res, 201, { name: safeName, path: `./assets/${safeName}` });
   }
+  if (pathname === "/api/project/open-external" && req.method === "POST") {
+    const input = await body(req); const base = projectPath(); const file = resolve(String(input.sourcePath || ""));
+    if (!base || !file.startsWith(base) || !existsSync(file)) return json(res, 400, { error: "源文件不存在" });
+    try { if (process.platform === "win32") await run("cmd.exe", ["/c", "start", "", file], base); else await run("xdg-open", [file], base); return json(res, 200, { ok: true }); } catch (error) { return json(res, 400, { error: error.message }); }
+  }
   if (pathname === "/api/content" && req.method === "GET") {
     const items = [...scanProject().items, ...readContent()].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     return json(res, 200, items);
