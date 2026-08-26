@@ -282,14 +282,14 @@ const api = async (req, res, pathname, url) => {
   }
   if (pathname === "/api/git/commit" && req.method === "POST") {
     const base = projectPath(); if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
-    const input = await body(req); try { await run("git", ["add", "-A"], base); const result = await run("git", ["commit", "-m", String(input.message || "content: update from Firefly studio")], base); return json(res, 200, { ok: true, ...result }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
+    const input = await body(req); try { const result = await run("git", ["commit", "-m", String(input.message || "content: update from Firefly studio")], base); return json(res, 200, { ok: true, ...result }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
   }
   if (pathname === "/api/git/push" && req.method === "POST") {
     const base = projectPath(); if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
     try { return json(res, 200, { ok: true, ...(await pushCurrentBranch(base)) }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
   }
   if (pathname === "/api/git/artifact-commit" && req.method === "POST") {
-    try { const directory = await ensureArtifactRepo(); const input = await body(req); await run("git", ["add", "-A"], directory); const result = await run("git", ["commit", "-m", String(input.message || `deploy: ${dateText().replace(/[: ]/g, "-")}`)], directory); return json(res, 200, { ok: true, ...result, repository: artifactRemote }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
+    try { const directory = await ensureArtifactRepo(); const input = await body(req); const result = await run("git", ["commit", "-m", String(input.message || `deploy: ${dateText().replace(/[: ]/g, "-")}`)], directory); return json(res, 200, { ok: true, ...result, repository: artifactRemote }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
   }
   if (pathname === "/api/git/artifact-push" && req.method === "POST") {
     try { const directory = await ensureArtifactRepo(); const result = await run("git", ["push", "--force-with-lease", "origin", "master"], directory); return json(res, 200, { ok: true, ...result, repository: artifactRemote }); } catch (error) { return json(res, 400, { error: error.message, output: error.stdout || error.stderr || "" }); }
