@@ -52,6 +52,7 @@
 }
 .search-box input::-webkit-search-cancel-button { opacity: 0.55; }
 .content-header { min-height: 4.25rem; }
+[hidden] { display: none !important; }
 
 @media (min-width: 900px) {
   .app-header,
