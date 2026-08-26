@@ -437,7 +437,7 @@ const api = async (req, res, pathname, url) => {
     if (projectItem) return json(res, 201, projectItem);
     const now = new Date().toISOString();
     const title = input.title?.trim() || `动态 ${now.slice(0, 10)}`;
-    const item = { id: crypto.randomUUID(), type: input.type === "dynamic" ? "dynamic" : "article", title, slug: slugify(input.slug || title), description: String(input.description || "").trim(), category: String(input.category || "").trim(), tags: Array.isArray(input.tags) ? input.tags.filter(Boolean) : [], content: input.content, status, publishedAt: status === "published" ? now : null, createdAt: now, updatedAt: now };
+    const item = { id: crypto.randomUUID(), type: input.type === "dynamic" ? "dynamic" : "article", title, slug: slugify(input.slug || title), description: String(input.description || "").trim(), category: String(input.category || "").trim(), tags: Array.isArray(input.tags) ? input.tags.filter(Boolean) : [], location: String(input.location || "").trim(), metadata: input.metadata || {}, content: input.content, status, publishedAt: status === "published" ? now : null, createdAt: now, updatedAt: now };
     const items = readContent(); items.push(item); saveContent(items);
     return json(res, 201, item);
   }
@@ -452,7 +452,16 @@ const api = async (req, res, pathname, url) => {
   }
   if (projectItem) {
     if (action && req.method === "POST") {
-      if (projectItem.type === "dynamic" && action === "unpublish") return json(res, 400, { error: "Firefly 动态不支持草稿状态，可以编辑或删除这条动态" });
+      if (projectItem.type === "dynamic" && action === "unpublish") {
+        const now = new Date().toISOString();
+        const items = readContent();
+        const draft = { id: crypto.randomUUID(), type: "dynamic", title: projectItem.title, slug: projectItem.slug, description: projectItem.description, category: "", tags: [], location: String(projectItem.frontmatter?.location || ""), metadata: projectItem.frontmatter || {}, content: projectItem.content, status: "draft", publishedAt: null, createdAt: projectItem.createdAt || now, updatedAt: now };
+        items.push(draft);
+        saveContent(items);
+        try { unlinkSync(projectItem.sourcePath); } catch (error) { items.pop(); saveContent(items); throw error; }
+        emitChange();
+        return json(res, 200, draft);
+      }
       writeProjectItem(projectItem, projectItem, action === "publish" ? "published" : "draft");
       return json(res, 200, scanProject().items.find((item) => item.id === id));
     }
