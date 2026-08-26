@@ -24,16 +24,51 @@ $("#sort-toggle").onclick = () => { state.sort = state.sort === "desc" ? "asc" :
 $("#asset-upload").onchange = async () => { const file = $("#asset-upload").files[0]; if (!file) return; if (!state.editingSourcePath) return toast("请先保存内容，再上传图片"); const form = new FormData(); form.append("sourcePath", state.editingSourcePath); form.append("file", file); const response = await fetch("/api/project/upload", { method: "POST", body: form }); const result = await response.json(); if (!response.ok) return toast(result.error); $("#content").setRangeText(`![${file.name}](${result.path})`, $("#content").selectionStart, $("#content").selectionEnd, "end"); toast("图片已上传并插入正文"); };
 const projectAction = async (url, options = {}) => { const response = await fetch(url, options); const result = await response.json(); if (!response.ok) return toast(result.error || result.output || "操作失败"); return result; };
 const managementOutput = (message) => { $("#management-output").textContent = message || "操作完成"; };
-$("#source-status").onclick = async () => { managementOutput("正在执行 git status --short..."); const result = await projectAction("/api/git/status"); if (result) managementOutput(result.output?.trim() || "源码仓库工作区干净，没有未提交变更。"); };
-$("#source-add").onclick = async () => { managementOutput("正在执行 git add -A..."); const result = await projectAction("/api/git/add", { method: "POST" }); if (result) managementOutput(result.output?.trim() || "git add -A 执行完成，源码变更已加入暂存区。"); };
-$("#artifact-status").onclick = async () => { managementOutput("正在执行 git status --short..."); const result = await projectAction("/api/git/artifact-status"); if (result) managementOutput(result.output?.trim() || "构建产物仓库工作区干净，没有未提交变更。"); };
-$("#artifact-add").onclick = async () => { managementOutput("正在执行 git add -A..."); const result = await projectAction("/api/git/artifact-add", { method: "POST" }); if (result) managementOutput(result.output?.trim() || "git add -A 执行完成，构建产物已加入暂存区。"); };
+const appendManagementOutput = (text) => { const output = $("#management-output"); output.textContent += text; output.scrollTop = output.scrollHeight; };
+const streamAction = async (action, payload = {}, button = null, successMessage = "命令执行完成") => {
+  const original = button?.innerHTML;
+  if (button) button.disabled = true;
+  managementOutput(`$ ${action}\n\n`);
+  try {
+    const response = await fetch("/api/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, ...payload }) });
+    if (!response.ok) { const error = await response.json(); throw new Error(error.error || "命令启动失败"); }
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let doneEvent = null;
+    const processLine = (line) => { if (!line.trim()) return; const event = JSON.parse(line); if (event.type === "output") appendManagementOutput(event.data); if (event.type === "done") doneEvent = event; };
+    while (true) {
+      const { value, done } = await reader.read();
+      buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+      lines.forEach(processLine);
+      if (done) break;
+    }
+    if (buffer) processLine(buffer);
+    if (!doneEvent?.ok) { appendManagementOutput(`\n\n[失败，退出码 ${doneEvent?.code ?? 1}]`); toast("命令执行失败"); return false; }
+    if ($("#management-output").textContent === `$ ${action}\n\n`) appendManagementOutput("（命令没有输出）");
+    appendManagementOutput("\n\n[完成，退出码 0]");
+    toast(successMessage);
+    return true;
+  } catch (error) {
+    appendManagementOutput(`\n${error.message}\n\n[命令启动失败]`);
+    toast(error.message);
+    return false;
+  } finally {
+    if (button) { button.disabled = false; button.innerHTML = original; }
+  }
+};
+$("#source-status").onclick = () => streamAction("source-status", {}, $("#source-status"), "源码状态读取完成");
+$("#source-add").onclick = () => streamAction("source-add", {}, $("#source-add"), "源码变更已加入暂存区");
+$("#artifact-status").onclick = () => streamAction("artifact-status", {}, $("#artifact-status"), "产物状态读取完成");
+$("#artifact-add").onclick = () => streamAction("artifact-add", {}, $("#artifact-add"), "构建产物已加入暂存区");
 const askAction = ({ title, message, input = false, value = "", confirmText = "确认", danger = false, kicker = "CONFIRM ACTION" }) => new Promise((resolve) => { const dialog = $("#action-dialog"); dialog.returnValue = ""; $("#action-title").textContent = title; $("#action-message").textContent = message; $("#action-kicker").textContent = kicker; $("#action-input-wrap").classList.toggle("hidden", !input); $("#action-input").value = value; $("#action-confirm").textContent = confirmText; $("#action-confirm").classList.toggle("danger-button", danger); $("#action-confirm").classList.toggle("primary", !danger); dialog.showModal(); if (input) setTimeout(() => $("#action-input").select(), 0); dialog.onclose = () => resolve(dialog.returnValue === "confirm" ? (input ? $("#action-input").value.trim() : true) : null); });
-$("#source-commit").onclick = async () => { const message = await askAction({ title: "提交源码", message: "提交当前暂存区中的源码变更。", input: true, value: "content: update from Firefly studio", confirmText: "创建提交", kicker: "GIT COMMIT" }); if (!message) return; managementOutput("正在执行 git commit..."); const result = await projectAction("/api/git/commit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message }) }); if (result) { managementOutput(result.output || "源码提交完成。"); toast("源码提交完成"); } };
-$("#source-push").onclick = async () => { managementOutput("正在执行 git push..."); const result = await projectAction("/api/git/push", { method: "POST" }); if (result) { managementOutput(result.output || "源码推送完成。"); toast("源码推送完成"); } };
-$("#run-build").onclick = async () => { const button = $("#run-build"); button.disabled = true; button.textContent = "构建中..."; managementOutput("正在执行 pnpm check 和 pnpm build..."); const result = await projectAction("/api/project/build", { method: "POST" }); button.disabled = false; button.textContent = "执行构建"; if (result) { managementOutput(`${result.check || "检查完成"}\n${result.build || "构建完成"}`); toast("构建完成，dist 已更新"); } else managementOutput("构建失败，请查看右下角提示。"); };
-$("#artifact-commit").onclick = async () => { const message = await askAction({ title: "提交构建产物", message: "提交 dist 仓库当前暂存区中的变更。", input: true, value: "deploy: update dist", confirmText: "创建提交", kicker: "GIT COMMIT" }); if (!message) return; managementOutput("正在执行 git commit..."); const result = await projectAction("/api/git/artifact-commit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message }) }); if (result) { managementOutput(result.output || "构建产物提交完成。"); toast("构建产物提交完成"); } };
-$("#artifact-push").onclick = async () => { managementOutput("正在执行 git push..."); const result = await projectAction("/api/git/artifact-push", { method: "POST" }); if (result) { managementOutput(result.output || "构建产物推送完成。"); toast("构建产物推送完成"); } };
+$("#source-commit").onclick = async () => { const message = await askAction({ title: "提交源码", message: "提交当前暂存区中的源码变更。", input: true, value: "content: update from Firefly studio", confirmText: "创建提交", kicker: "GIT COMMIT" }); if (message) streamAction("source-commit", { message }, $("#source-commit"), "源码提交完成"); };
+$("#source-push").onclick = () => streamAction("source-push", {}, $("#source-push"), "源码推送完成");
+$("#run-build").onclick = () => streamAction("artifact-build", {}, $("#run-build"), "构建完成，dist 已更新");
+$("#artifact-commit").onclick = async () => { const message = await askAction({ title: "提交构建产物", message: "提交 dist 仓库当前暂存区中的变更。", input: true, value: "deploy: update dist", confirmText: "创建提交", kicker: "GIT COMMIT" }); if (message) streamAction("artifact-commit", { message }, $("#artifact-commit"), "构建产物提交完成"); };
+$("#artifact-push").onclick = () => streamAction("artifact-push", {}, $("#artifact-push"), "构建产物推送完成");
 if (window.EventSource) { const events = new EventSource("/api/events"); events.addEventListener("content-changed", () => { refresh(); toast("检测到项目文件变化，内容已刷新"); }); }
 $("#content-list").onclick = async (event) => {
   const button = event.target.closest("button");

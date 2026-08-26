@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, watch, writeFileSync } from "node:fs";
 import { dirname, extname, join, normalize, relative, resolve } from "node:path";
 import { promisify } from "node:util";
@@ -241,8 +241,74 @@ const pushArtifactBranch = async (cwd) => {
   }
 };
 const runPnpm = (args, cwd) => process.platform === "win32" ? run(process.env.ComSpec || "cmd.exe", ["/d", "/s", "/c", `pnpm ${args.join(" ")}`], cwd) : run("pnpm", args, cwd);
+const stripAnsi = (value) => String(value).replace(/[\u001B\u009B][[\]()#;?]*(?:(?:(?:[a-zA-Z\d]*(?:;[-a-zA-Z\d\/#&.:=?%@~_]+)*)?\u0007)|(?:(?:\d{1,4}(?:;\d{0,4})*)?[\dA-PR-TZcf-nq-uy=><~]))/g, "");
+const streamEvent = (res, event) => res.write(`${JSON.stringify(event)}\n`);
+const runStreaming = (command, args, cwd, res) => new Promise((resolve) => {
+  const child = spawn(command, args, { cwd, windowsHide: true });
+  child.stdout.on("data", (chunk) => streamEvent(res, { type: "output", data: stripAnsi(chunk) }));
+  child.stderr.on("data", (chunk) => streamEvent(res, { type: "output", data: stripAnsi(chunk) }));
+  child.on("error", (error) => { streamEvent(res, { type: "output", data: `${error.message}\n` }); resolve(1); });
+  child.on("close", (code) => resolve(code ?? 1));
+});
+const streamPnpm = (args, cwd, res) => process.platform === "win32" ? runStreaming(process.env.ComSpec || "cmd.exe", ["/d", "/s", "/c", `pnpm ${args.join(" ")}`], cwd, res) : runStreaming("pnpm", args, cwd, res);
+const streamSourcePush = async (cwd, res) => {
+  const branch = (await run("git", ["branch", "--show-current"], cwd)).output.trim();
+  if (!branch) throw new Error("当前仓库处于 detached HEAD，无法推送");
+  try {
+    await run("git", ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], cwd);
+    return runStreaming("git", ["push"], cwd, res);
+  } catch {
+    const remotes = (await run("git", ["remote"], cwd)).output.split(/\r?\n/).map((remote) => remote.trim()).filter(Boolean);
+    if (!remotes.length) throw new Error("当前仓库没有配置远程仓库");
+    const remote = remotes.includes("origin") ? "origin" : remotes[0];
+    streamEvent(res, { type: "output", data: `首次推送：绑定 ${branch} -> ${remote}/${branch}\n` });
+    return runStreaming("git", ["push", "--set-upstream", remote, branch], cwd, res);
+  }
+};
+const streamArtifactPush = async (cwd, res) => {
+  const branch = (await run("git", ["branch", "--show-current"], cwd)).output.trim() || "master";
+  streamEvent(res, { type: "output", data: `获取 origin/${branch}...\n` });
+  const fetchCode = await runStreaming("git", ["fetch", "origin", branch], cwd, res);
+  return fetchCode === 0
+    ? runStreaming("git", ["push", "--force-with-lease", "--set-upstream", "origin", branch], cwd, res)
+    : runStreaming("git", ["push", "--set-upstream", "origin", branch], cwd, res);
+};
 
 const api = async (req, res, pathname, url) => {
+  if (pathname === "/api/stream" && req.method === "POST") {
+    const input = await body(req);
+    const base = projectPath();
+    if (!base) return json(res, 400, { error: "请先连接 Firefly 项目" });
+    res.writeHead(200, { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+    try {
+      let code = 1;
+      if (input.action === "source-status") code = await runStreaming("git", ["-c", "core.quotePath=false", "status", "--short"], base, res);
+      else if (input.action === "source-add") code = await runStreaming("git", ["add", "-A"], base, res);
+      else if (input.action === "source-commit") code = await runStreaming("git", ["commit", "-m", String(input.message || "content: update from Firefly studio")], base, res);
+      else if (input.action === "source-push") code = await streamSourcePush(base, res);
+      else {
+        const directory = await ensureArtifactRepo();
+        if (input.action === "artifact-status") code = await runStreaming("git", ["-c", "core.quotePath=false", "status", "--short"], directory, res);
+        else if (input.action === "artifact-add") code = await runStreaming("git", ["add", "-A"], directory, res);
+        else if (input.action === "artifact-commit") code = await runStreaming("git", ["commit", "-m", String(input.message || `deploy: ${dateText().replace(/[: ]/g, "-")}`)], directory, res);
+        else if (input.action === "artifact-push") code = await streamArtifactPush(directory, res);
+        else if (input.action === "artifact-build") {
+          streamEvent(res, { type: "output", data: "$ pnpm check\n" });
+          code = await streamPnpm(["check"], base, res);
+          if (code === 0) {
+            streamEvent(res, { type: "output", data: "\n$ pnpm build\n" });
+            code = await streamPnpm(["build"], base, res);
+          }
+        } else throw new Error("不支持的流式操作");
+      }
+      streamEvent(res, { type: "done", ok: code === 0, code });
+    } catch (error) {
+      streamEvent(res, { type: "output", data: `${error.message || "命令执行失败"}\n` });
+      streamEvent(res, { type: "done", ok: false, code: 1 });
+    }
+    res.end();
+    return;
+  }
   if (pathname === "/api/events" && req.method === "GET") {
     res.writeHead(200, { "Content-Type": "text/event-stream; charset=utf-8", "Cache-Control": "no-cache", Connection: "keep-alive" });
     res.write("event: connected\ndata: ok\n\n"); eventClients.add(res); req.on("close", () => eventClients.delete(res)); return;
