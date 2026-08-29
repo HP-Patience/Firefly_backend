@@ -25,13 +25,14 @@ $("#search").oninput = render;
 $("#sort-toggle").onclick = () => { state.sort = state.sort === "desc" ? "asc" : "desc"; $("#sort-toggle").innerHTML = state.sort === "desc" ? '<i class="ph ph-sort-descending" aria-hidden="true"></i>按更新时间（降序）' : '<i class="ph ph-sort-ascending" aria-hidden="true"></i>按更新时间（升序）'; render(); };
 document.querySelector(".upload-field")?.remove();
 const projectAction = async (url, options = {}) => { const response = await fetch(url, options); const result = await response.json(); if (!response.ok) return toast(result.error || result.output || "操作失败"); return result; };
-const managementOutput = (message) => { $("#management-output").textContent = message || "操作完成"; };
-const appendManagementOutput = (text) => { const output = $("#management-output"); output.textContent += text; output.scrollTop = output.scrollHeight; };
-const streamAction = async (action, payload = {}, button = null, successMessage = "命令执行完成") => {
+let activeOutputSelector = "#management-output";
+const managementOutput = (message) => { $(activeOutputSelector).textContent = message || "操作完成"; };
+const appendManagementOutput = (text) => { const output = $(activeOutputSelector); output.textContent += text; output.scrollTop = output.scrollHeight; };
+const streamAction = async (action, payload = {}, button = null, successMessage = "命令执行完成", resetOutput = true) => {
   const original = button?.innerHTML;
   const managementButtons = [...document.querySelectorAll(".management-actions button")];
   managementButtons.forEach((item) => { item.disabled = true; });
-  managementOutput(`$ ${action}\n\n`);
+  if (resetOutput) managementOutput(`$ ${action}\n\n`); else appendManagementOutput(`\n\n$ ${action}\n\n`);
   try {
     const response = await fetch("/api/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, ...payload }) });
     if (!response.ok) { const error = await response.json(); throw new Error(error.error || "命令启动失败"); }
@@ -50,7 +51,7 @@ const streamAction = async (action, payload = {}, button = null, successMessage 
     }
     if (buffer) processLine(buffer);
     if (!doneEvent?.ok) { appendManagementOutput(`\n\n[失败，退出码 ${doneEvent?.code ?? 1}]`); toast("命令执行失败"); return false; }
-    if ($("#management-output").textContent === `$ ${action}\n\n`) appendManagementOutput("（命令没有输出）");
+    if ($(activeOutputSelector).textContent.endsWith(`$ ${action}\n\n`)) appendManagementOutput("（命令没有输出）");
     appendManagementOutput("\n\n[完成，退出码 0]");
     toast(successMessage);
     return true;
@@ -104,7 +105,10 @@ refresh();
 $("#side-new").onclick = () => openEditor(); $("#project-help").onclick = () => $("#project-help-modal").classList.remove("hidden"); $("#close-project-help").onclick = () => $("#project-help-modal").classList.add("hidden"); $("#project-help-modal").onclick = (event) => { if (event.target === event.currentTarget) $("#project-help-modal").classList.add("hidden"); };
 let remoteTarget = "source"; const openRemote = (target) => { remoteTarget = target; $("#remote-title").textContent = target === "artifact" ? "选择构建产物远程仓库" : "选择源码远程仓库"; $("#remote-url").value = ""; $("#remote-output").textContent = "等待操作..."; $("#remote-modal").classList.remove("hidden"); $("#remote-url").focus(); }; $("#source-remote").onclick = () => openRemote("source"); $("#artifact-remote").onclick = () => openRemote("artifact"); $("#close-remote").onclick = () => $("#remote-modal").classList.add("hidden"); $("#remote-modal").onclick = (event) => { if (event.target === event.currentTarget) $("#remote-modal").classList.add("hidden"); }; const remoteRequest = async (path, payload) => { const response = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload, target: remoteTarget }) }); const result = await response.json(); $("#remote-output").textContent = result.output || result.error || "操作完成"; return response.ok; }; $("#remote-add").onclick = async () => { const ok = await remoteRequest("/api/git/remote/add", { alias: $("#remote-alias").value, url: $("#remote-url").value }); if (ok) toast("远程仓库已添加"); }; $("#remote-test").onclick = () => remoteRequest("/api/git/remote/test", {});
 $("#remote-upstream").onclick = async () => { const alias = $("#remote-alias").value.trim() || "origin"; const confirmed = await askAction({ title: "绑定并首次推送", message: `将当前分支推送到 ${alias}，并设置为上游跟踪分支。`, confirmText: "绑定并推送", kicker: "GIT PUSH --SET-UPSTREAM" }); if (!confirmed) return; $("#remote-output").textContent = "正在绑定上游分支并推送..."; const ok = await remoteRequest("/api/git/remote/upstream", { alias }); if (ok) toast("上游分支已绑定并完成首次推送"); };
-const openCodeManagement = (target) => { $("#source-management-section").classList.toggle("hidden", target !== "source"); $("#artifact-management-section").classList.toggle("hidden", target !== "artifact"); $("#management-output").textContent = "等待操作..."; $("#code-management-modal").classList.remove("hidden"); }; $("#source-manager").onclick = () => openCodeManagement("source"); $("#artifact-manager").onclick = () => openCodeManagement("artifact"); $("#close-code-management").onclick = () => $("#code-management-modal").classList.add("hidden"); $("#code-management-modal").onclick = (event) => { if (event.target === event.currentTarget) $("#code-management-modal").classList.add("hidden"); };
+const openCodeManagement = (target) => { activeOutputSelector = "#management-output"; $("#source-management-section").classList.toggle("hidden", target !== "source"); $("#artifact-management-section").classList.toggle("hidden", target !== "artifact"); $("#management-output").textContent = "等待操作..."; $("#code-management-modal").classList.remove("hidden"); }; $("#source-manager").onclick = () => openCodeManagement("source"); $("#artifact-manager").onclick = () => openCodeManagement("artifact"); $("#close-code-management").onclick = () => $("#code-management-modal").classList.add("hidden"); $("#code-management-modal").onclick = (event) => { if (event.target === event.currentTarget) $("#code-management-modal").classList.add("hidden"); };
+const quickPublishSteps = [["source-status", {}, "源码状态读取完成"], ["source-add", {}, "源码变更已加入暂存区"], ["source-commit", { message: "content: update from Firefly studio" }, "源码提交完成"], ["source-push", {}, "源码推送完成"], ["artifact-check", {}, "项目检查完成"], ["artifact-build", {}, "构建完成，dist 已更新"], ["artifact-status", {}, "产物状态读取完成"], ["artifact-add", {}, "构建产物已加入暂存区"], ["artifact-commit", {}, "构建产物提交完成"], ["artifact-push", {}, "构建产物推送完成"]];
+const runQuickPublish = async () => { const button = $("#start-quick-publish"); button.disabled = true; activeOutputSelector = "#quick-publish-output"; managementOutput("一键发布开始...\n"); let ok = true; for (const [action, payload, successMessage] of quickPublishSteps) { ok = await streamAction(action, payload, null, successMessage, false); if (!ok) break; } if (ok) { appendManagementOutput("\n\n[一键发布完成]"); toast("一键发布完成"); } button.disabled = false; };
+$("#open-quick-publish").onclick = () => { $("#quick-publish-output").textContent = "等待操作..."; $("#quick-publish-modal").classList.remove("hidden"); }; $("#close-quick-publish").onclick = () => $("#quick-publish-modal").classList.add("hidden"); $("#start-quick-publish").onclick = runQuickPublish; $("#quick-publish-modal").onclick = (event) => { if (event.target === event.currentTarget) $("#quick-publish-modal").classList.add("hidden"); };
 $("#action-dialog").onclick = (event) => { if (event.target === event.currentTarget) $("#action-dialog").close("cancel"); };
 $("#close-content-actions-help").onclick = () => $("#content-actions-help-modal").classList.add("hidden");
 $("#content-actions-help-modal").onclick = (event) => { if (event.target === event.currentTarget) $("#content-actions-help-modal").classList.add("hidden"); };
